@@ -40,8 +40,26 @@ async function enviarParaSupabase(chaveLocal) {
   const id = TEAM_DATA_KEYS[chaveLocal];
   if (!id) return;
   const dataMap = { leadsProsp, crmLeads, analyses, proposals, services };
-  const value = dataMap[chaveLocal];
+  let value = dataMap[chaveLocal];
   const { data: { user } } = await sb.auth.getUser();
+
+  // Para leadsProsp: NÃO sobrescreve a lista inteira do time. Busca o que já
+  // está salvo, preserva os leads de outras pessoas, e só substitui os leads
+  // que pertencem ao usuário atual (evita que o save de alguém apague os
+  // leads gerados por outro colega).
+  if (chaveLocal === 'leadsProsp') {
+    try {
+      const { data: atual } = await sb.from('team_data').select('data').eq('id', id).single();
+      const remotos = (atual && atual.data) || [];
+      const meuId = user ? user.id : null;
+      const remotosDeOutros = remotos.filter(l => l.donoId && l.donoId !== meuId);
+      const meusOuSemDono = value.filter(l => !l.donoId || l.donoId === meuId);
+      value = [...remotosDeOutros, ...meusOuSemDono];
+      leadsProsp = value; // mantém a variável local também mesclada
+    } catch (e) {
+      console.warn('Não foi possível mesclar leads antes de salvar, enviando só o local:', e);
+    }
+  }
 
   try {
     await sb.from('team_data').upsert({
