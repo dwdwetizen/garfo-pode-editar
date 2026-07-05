@@ -969,6 +969,7 @@ select.input { cursor:pointer; }
 </div><!-- /#appRoot -->
 
 <script src="/admin.js"></script>
+<script src="/sync.js"></script>
 
 <script src="/auth.js"></script>
 <script>
@@ -2071,10 +2072,10 @@ function setCrmPeriod(p, el) { document.querySelectorAll('#crm-metrics .filter-t
 function toggleDarkMode() {}
 
 // ===================== STORAGE =====================
-function saveAnalyses() { localStorage.setItem('gbp_analyses', JSON.stringify(analyses)); }
-function saveServices() { localStorage.setItem('gbp_services', JSON.stringify(services)); }
-function saveProposals() { localStorage.setItem('gbp_proposals', JSON.stringify(proposals)); }
-function saveCrm() { localStorage.setItem('gbp_crm', JSON.stringify(crmLeads)); }
+function saveAnalyses() { localStorage.setItem('gbp_analyses', JSON.stringify(analyses)); if(typeof enviarParaSupabase==='function') enviarParaSupabase('analyses'); }
+function saveServices() { localStorage.setItem('gbp_services', JSON.stringify(services)); if(typeof enviarParaSupabase==='function') enviarParaSupabase('services'); }
+function saveProposals() { localStorage.setItem('gbp_proposals', JSON.stringify(proposals)); if(typeof enviarParaSupabase==='function') enviarParaSupabase('proposals'); }
+function saveCrm() { localStorage.setItem('gbp_crm', JSON.stringify(crmLeads)); if(typeof enviarParaSupabase==='function') enviarParaSupabase('crmLeads'); }
 
 // ===================== LOADING =====================
 function showLoading(msg) { document.getElementById('loadingText').textContent = msg || 'Carregando...'; document.getElementById('loadingOverlay').style.display = 'flex'; }
@@ -2087,7 +2088,7 @@ let leadsProsp = JSON.parse(localStorage.getItem('localway_leads_prosp') || '[]'
 let pitchLeadAtual = null;
 let pitchTipoAtual = 'abordagem';
 
-function salvarLeadsProsp() { localStorage.setItem('localway_leads_prosp', JSON.stringify(leadsProsp)); }
+function salvarLeadsProsp() { localStorage.setItem('localway_leads_prosp', JSON.stringify(leadsProsp)); if(typeof enviarParaSupabase==='function') enviarParaSupabase('leadsProsp'); }
 
 function getProspConfig() {
   return {
