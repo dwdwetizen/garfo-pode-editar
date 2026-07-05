@@ -2264,7 +2264,9 @@ async function executarGerarLeads() {
         observacoes: '',
         dataReuniao: '',
         obsReuniao:  '',
-        dataAdicionado: new Date().toLocaleDateString('pt-BR')
+        dataAdicionado: new Date().toLocaleDateString('pt-BR'),
+        donoId:      window.currentProfile ? window.currentProfile.id : null,
+        donoNome:    window.currentProfile ? (window.currentProfile.nome || window.currentProfile.email) : ''
       });
       adicionados++;
     }
@@ -2305,7 +2307,13 @@ function getLeadsFiltrados() {
   const perfil  = document.getElementById('prosp-filter-perfil')?.value || '';
   const site    = document.getElementById('prosp-filter-site')?.value || '';
   const status  = document.getElementById('prosp-filter-status')?.value || '';
+  const isAdmin = window.currentProfile && window.currentProfile.role === 'admin';
+  const meuId   = window.currentProfile ? window.currentProfile.id : null;
   return leadsProsp.filter(l => {
+    // Cada pessoa só vê os próprios leads. Leads antigos sem "dono" (gerados
+    // antes desta correção) continuam visíveis pra todo mundo, pra não sumir
+    // histórico. Admin sempre vê tudo.
+    if (!isAdmin && l.donoId && l.donoId !== meuId) return false;
     if (q && !l.empresa.toLowerCase().includes(q) && !l.segmento.toLowerCase().includes(q) && !l.bairro.toLowerCase().includes(q)) return false;
     if (perfil && l.perfil !== perfil) return false;
     if (site   && l.temSite !== site)  return false;
