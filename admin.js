@@ -16,6 +16,15 @@ async function loadAdminPanel() {
     document.getElementById('adm-google-key').value = settings.google_key || '';
     document.getElementById('adm-groq-key').value = settings.groq_key || '';
     document.getElementById('adm-calendar-id').value = settings.calendar_id || '';
+
+    const statusBox = document.getElementById('adm-calendar-status');
+    if (settings.google_refresh_token) {
+      statusBox.textContent = '✅ Conectada — os agendamentos vão direto pra sua agenda.';
+      statusBox.style.color = 'var(--green2)';
+    } else {
+      statusBox.textContent = '⚠️ Ainda não conectada — clique no botão abaixo pra autorizar.';
+      statusBox.style.color = 'var(--yellow2)';
+    }
   }
 
   // Monta checkboxes de permissão do form "novo funcionário"
@@ -129,4 +138,58 @@ async function criarFuncionario() {
     msg.style.color = 'var(--red2)';
     msg.textContent = 'Erro: ' + err.message;
   }
+}
+
+// ===================== VISÃO DA EQUIPE =====================
+async function loadTeamViewSelect() {
+  if (!window.currentProfile || window.currentProfile.role !== 'admin') return;
+  const { data: profiles } = await sb.from('profiles').select('id, nome, email, role').order('created_at');
+  const sel = document.getElementById('tv-select-func');
+  sel.innerHTML = '<option value="">Selecione...</option>' +
+    profiles.filter(p => p.id !== window.currentProfile.id).map(p =>
+      `<option value="${p.id}">${p.nome || p.email} ${p.role==='admin' ? '(admin)' : ''}</option>`
+    ).join('');
+}
+
+async function verFuncionario(userId) {
+  const box = document.getElementById('tv-resultado');
+  if (!userId) { box.innerHTML = ''; return; }
+  box.innerHTML = '<div style="color:var(--text2);font-size:13px;">Carregando...</div>';
+
+  const dados = await buscarDadosDeUsuario(userId);
+  const leads = dados.leadsProsp || [];
+  const crm = dados.crmLeads || [];
+
+  const crmPorEstagio = {};
+  crm.forEach(l => { const s = l.stage || 'sem_estagio'; crmPorEstagio[s] = (crmPorEstagio[s]||0)+1; });
+
+  box.innerHTML = `
+    <div class="card" style="padding:16px;margin-bottom:16px;">
+      <div style="font-weight:600;margin-bottom:10px;">📊 Resumo</div>
+      <div style="display:flex;gap:20px;font-size:13px;">
+        <div><b>${leads.length}</b> leads prospectados</div>
+        <div><b>${crm.length}</b> no CRM</div>
+      </div>
+      ${Object.keys(crmPorEstagio).length ? `
+        <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;">
+          ${Object.entries(crmPorEstagio).map(([k,v]) => `
+            <span style="background:var(--bg3);padding:4px 10px;border-radius:6px;font-size:12px;">${k}: <b>${v}</b></span>
+          `).join('')}
+        </div>` : ''}
+    </div>
+
+    <div class="card" style="padding:16px;">
+      <div style="font-weight:600;margin-bottom:10px;">📋 Leads no CRM</div>
+      ${crm.length === 0 ? '<div style="color:var(--text2);font-size:13px;">Nenhum lead no CRM ainda.</div>' :
+        `<div style="display:flex;flex-direction:column;gap:8px;">
+          ${crm.map(l => `
+            <div style="display:flex;justify-content:space-between;background:var(--bg3);padding:10px 12px;border-radius:8px;font-size:13px;">
+              <span>${l.nome || l.name || 'Sem nome'}</span>
+              <span style="color:var(--text2);">${l.stage || '—'}</span>
+            </div>
+          `).join('')}
+        </div>`
+      }
+    </div>
+  `;
 }
