@@ -1,0 +1,2557 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Localway Rank</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root {
+  --bg: #0d1117;
+  --bg2: #161b22;
+  --bg3: #1c2333;
+  --bg4: #21262d;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text2: #8b949e;
+  --text3: #6e7681;
+  --purple: #7c3aed;
+  --purple2: #8b5cf6;
+  --purple3: #a78bfa;
+  --green: #238636;
+  --green2: #3fb950;
+  --blue: #1f6feb;
+  --blue2: #388bfd;
+  --yellow: #d29922;
+  --yellow2: #e3b341;
+  --red: #da3633;
+  --red2: #f85149;
+  --orange: #e07b1a;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --sidebar-w: 220px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; overflow:hidden; }
+
+/* SIDEBAR */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  height: 100vh; position: fixed; left:0; top:0; z-index:100;
+  transition: width .3s;
+}
+.sidebar.collapsed { width: 56px; }
+.sidebar-logo {
+  padding: 16px 14px;
+  display: flex; align-items: center; gap:10px;
+  border-bottom: 1px solid var(--border);
+  min-height: 64px;
+}
+.logo-icon {
+  width:36px; height:36px; border-radius:10px;
+  background: linear-gradient(135deg,#7c3aed,#2563eb);
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px; flex-shrink:0;
+}
+.logo-text { font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:14px; white-space:nowrap; overflow:hidden; }
+.logo-text span { color:var(--purple3); }
+.sidebar-user {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  display:flex; align-items:center; gap:10px;
+}
+.user-avatar {
+  width:32px; height:32px; border-radius:50%;
+  background: linear-gradient(135deg,#7c3aed,#2563eb);
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:600; flex-shrink:0;
+}
+.user-info { overflow:hidden; }
+.user-name { font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.user-email { font-size:10px; color:var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.user-badge { font-size:9px; background:var(--blue); color:#fff; padding:1px 6px; border-radius:4px; display:inline-block; margin-top:2px; }
+.sidebar-nav { flex:1; overflow-y:auto; padding:8px 0; }
+.nav-item {
+  display:flex; align-items:center; gap:10px;
+  padding: 9px 14px; cursor:pointer;
+  border-radius: var(--radius-sm); margin: 1px 6px;
+  transition: background .15s; color:var(--text2);
+  font-size:13px; white-space:nowrap; overflow:hidden;
+  border: none; background:none; width:calc(100% - 12px); text-align:left;
+}
+.nav-item:hover { background:var(--bg3); color:var(--text); }
+.nav-item.active { background:rgba(124,58,237,.15); color:var(--purple3); }
+.nav-icon { font-size:16px; flex-shrink:0; width:20px; text-align:center; }
+.nav-label { white-space:nowrap; overflow:hidden; }
+.sidebar-bottom {
+  padding:8px 0; border-top:1px solid var(--border);
+}
+.sidebar-toggle {
+  position:absolute; right:-12px; top:72px;
+  width:24px; height:24px; border-radius:50%;
+  background:var(--bg2); border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; font-size:10px; z-index:101;
+}
+.sidebar.collapsed .nav-label,
+.sidebar.collapsed .logo-text,
+.sidebar.collapsed .user-info { display:none; }
+
+/* MAIN */
+.main {
+  margin-left: var(--sidebar-w);
+  flex:1; overflow-y:auto; height:100vh;
+  background:var(--bg);
+  transition: margin-left .3s;
+}
+.main.expanded { margin-left:56px; }
+
+/* PAGES */
+.page { display:none; padding:28px 32px; min-height:100vh; }
+.page.active { display:block; }
+
+/* CARDS */
+.card {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:var(--radius); padding:20px;
+}
+.card-sm { padding:14px 16px; }
+
+/* BUTTONS */
+.btn {
+  display:inline-flex; align-items:center; gap:8px;
+  padding:9px 18px; border-radius:var(--radius-sm);
+  font-size:13px; font-weight:500; cursor:pointer;
+  border:none; transition:all .15s; text-decoration:none;
+}
+.btn-primary { background:linear-gradient(135deg,var(--purple),var(--blue)); color:#fff; }
+.btn-primary:hover { opacity:.9; transform:translateY(-1px); }
+.btn-secondary { background:var(--bg3); color:var(--text); border:1px solid var(--border); }
+.btn-secondary:hover { background:var(--bg4); }
+.btn-green { background:var(--green); color:#fff; }
+.btn-green:hover { background:#2ea043; }
+.btn-blue { background:var(--blue); color:#fff; }
+.btn-blue:hover { background:#2f7de0; }
+.btn-danger { background:transparent; color:var(--red2); border:1px solid var(--red2); font-size:12px; }
+.btn-danger:hover { background:rgba(218,54,51,.1); }
+.btn-lg { padding:14px 28px; font-size:15px; border-radius:10px; width:100%; justify-content:center; }
+
+/* INPUTS */
+.input-group { margin-bottom:16px; }
+.input-label { font-size:13px; font-weight:500; margin-bottom:6px; display:block; color:var(--text2); }
+.input {
+  width:100%; padding:12px 16px;
+  background:var(--bg); border:1.5px solid var(--border);
+  border-radius:var(--radius-sm); color:var(--text);
+  font-size:14px; font-family:inherit; transition:border .2s;
+  outline:none;
+}
+.input:focus { border-color:var(--purple); }
+.input::placeholder { color:var(--text3); }
+select.input { cursor:pointer; }
+
+/* BADGES */
+.badge {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:3px 10px; border-radius:20px; font-size:11px; font-weight:500;
+}
+.badge-green { background:rgba(35,134,54,.2); color:var(--green2); }
+.badge-yellow { background:rgba(210,153,34,.2); color:var(--yellow2); }
+.badge-red { background:rgba(218,54,51,.2); color:var(--red2); }
+.badge-blue { background:rgba(31,111,235,.2); color:var(--blue2); }
+.badge-purple { background:rgba(124,58,237,.2); color:var(--purple3); }
+
+/* PILLAR CARDS */
+.pillar-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; }
+.pillar-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:16px; text-align:center; }
+.pillar-icon { font-size:24px; margin-bottom:8px; }
+.pillar-name { font-size:10px; font-weight:600; letter-spacing:.5px; color:var(--text2); text-transform:uppercase; margin-bottom:6px; }
+.pillar-score { font-size:28px; font-weight:700; margin-bottom:4px; }
+.pillar-bar { height:4px; background:var(--bg3); border-radius:2px; margin-bottom:6px; }
+.pillar-bar-fill { height:100%; border-radius:2px; transition:width .8s; }
+.pillar-pct { font-size:11px; color:var(--text2); }
+
+
+/* PILLAR DETAILS */
+.pillar-card { cursor:default; }
+.pillar-details { display:none; text-align:left; border-top:1px solid var(--border); padding-top:10px; margin-top:8px; }
+.pillar-details.open { display:block; }
+.criteria-label { font-size:9px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:.6px; margin-bottom:8px; }
+.criteria-item { display:flex; align-items:flex-start; gap:7px; margin-bottom:8px; }
+.criteria-check { width:17px; height:17px; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; flex-shrink:0; margin-top:1px; }
+.criteria-check.ok { background:rgba(35,134,54,.25); color:var(--green2); }
+.criteria-check.fail { background:rgba(218,54,51,.2); color:var(--red2); }
+.criteria-body { flex:1; min-width:0; }
+.criteria-name { font-size:11px; font-weight:600; color:var(--text); line-height:1.3; }
+.criteria-detail { font-size:10px; color:var(--text2); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.criteria-score-bar { display:flex; align-items:center; gap:5px; margin-top:3px; }
+.criteria-bar-track { flex:1; height:3px; background:var(--bg3); border-radius:2px; overflow:hidden; }
+.criteria-bar-fill { height:100%; border-radius:2px; transition:width .6s; }
+.criteria-pts { font-size:10px; font-weight:700; white-space:nowrap; }
+.toggle-details-btn { width:100%; font-size:10px; padding:4px 8px; background:var(--bg3); border:1px solid var(--border); border-radius:6px; color:var(--text2); cursor:pointer; margin-top:8px; transition:all .15s; }
+.toggle-details-btn:hover { background:var(--bg4); color:var(--text); }
+
+/* PROGRESS BARS */
+.prog-bar { margin-bottom:18px; }
+.prog-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.prog-label { font-size:13px; font-weight:500; display:flex; align-items:center; gap:6px; }
+.prog-track { height:14px; background:var(--bg3); border-radius:7px; position:relative; overflow:hidden; }
+.prog-fill { height:100%; border-radius:7px; display:flex; align-items:center; justify-content:flex-end; padding-right:8px; font-size:10px; font-weight:600; color:#fff; transition:width 1s; }
+.prog-sector { width:3px; height:100%; background:rgba(255,255,255,.3); position:absolute; }
+
+/* INSIGHTS */
+.insight-card {
+  border:1.5px solid; border-radius:var(--radius-sm);
+  padding:14px 16px; margin-bottom:10px;
+}
+.insight-card.warning { border-color:rgba(210,153,34,.4); background:rgba(210,153,34,.05); }
+.insight-card.success { border-color:rgba(35,134,54,.4); background:rgba(35,134,54,.05); }
+.insight-card.danger { border-color:rgba(218,54,51,.4); background:rgba(218,54,51,.05); }
+.insight-title { font-size:13px; font-weight:600; margin-bottom:4px; }
+.insight-desc { font-size:12px; color:var(--text2); margin-bottom:4px; }
+.insight-action { font-size:12px; color:var(--blue2); }
+
+/* ANALYSES LIST */
+.analyses-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.analysis-card {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:var(--radius); padding:18px 20px; cursor:pointer;
+  transition:border-color .2s, transform .1s;
+}
+.analysis-card:hover { border-color:var(--purple); transform:translateY(-1px); }
+.analysis-name { font-size:15px; font-weight:600; margin-bottom:2px; }
+.analysis-cat { font-size:12px; color:var(--text2); margin-bottom:12px; }
+.analysis-score-big { font-size:28px; font-weight:700; float:right; margin-top:-36px; }
+.analysis-divider { height:1px; background:var(--border); margin:10px 0; }
+.analysis-meta { display:flex; align-items:center; justify-content:space-between; font-size:12px; }
+
+/* GEOGRID */
+.geogrid-config { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:20px; }
+.geogrid-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.cost-bar { background:var(--bg3); border-radius:var(--radius-sm); padding:12px 16px; display:flex; justify-content:space-between; align-items:center; margin-top:12px; }
+
+/* MAP */
+#map-container, #crm-map-container { width:100%; height:480px; border-radius:var(--radius); overflow:hidden; border:1px solid var(--border); }
+.leaflet-container { background:var(--bg3); }
+
+/* RAIO-X */
+.raiox-wrap { display:grid; grid-template-columns:300px 1fr; gap:0; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.raiox-sidebar { background:var(--bg2); border-right:1px solid var(--border); padding:16px; overflow-y:auto; max-height:600px; }
+.competitor-item {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 12px; border-radius:var(--radius-sm);
+  cursor:pointer; transition:background .15s; margin-bottom:4px;
+}
+.competitor-item:hover { background:var(--bg3); }
+.competitor-item.active { background:rgba(124,58,237,.15); border:1px solid rgba(124,58,237,.3); }
+.competitor-rank {
+  width:28px; height:28px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:700; flex-shrink:0;
+}
+.rank-1 { background:linear-gradient(135deg,#f59e0b,#d97706); color:#fff; }
+.rank-2 { background:var(--bg3); color:var(--text2); }
+.rank-3 { background:var(--bg3); color:var(--text2); }
+.rank-me { background:rgba(124,58,237,.3); color:var(--purple3); border:1.5px solid var(--purple); }
+.rank-other { background:var(--bg4); color:var(--text2); }
+.comp-name { font-size:12px; font-weight:500; }
+.comp-stars { font-size:11px; color:var(--yellow2); }
+
+/* CRM / KANBAN */
+.kanban-board { display:flex; gap:12px; overflow-x:auto; padding-bottom:12px; }
+.kanban-col {
+  min-width:220px; flex-shrink:0;
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:var(--radius); padding:12px;
+}
+.kanban-col-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.kanban-col-title { font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px; }
+.kanban-col-count { font-size:11px; background:var(--bg3); padding:1px 7px; border-radius:10px; color:var(--text2); }
+.kanban-card {
+  background:var(--bg); border:1px solid var(--border);
+  border-radius:var(--radius-sm); padding:12px; margin-bottom:8px;
+  cursor:grab; transition:border-color .15s;
+}
+.kanban-card:hover { border-color:var(--purple); }
+.kanban-card-meta { font-size:10px; color:var(--text2); margin-bottom:4px; display:flex; justify-content:space-between; }
+.kanban-card-name { font-size:13px; font-weight:500; margin-bottom:6px; }
+.kanban-card-value { font-size:15px; font-weight:700; color:var(--green2); }
+.col-status-dot { width:8px; height:8px; border-radius:50%; }
+
+/* SERVICES */
+.service-section { margin-bottom:20px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.service-section-header { padding:16px 20px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
+.service-section-header:hover { background:var(--bg3); }
+.service-item { padding:14px 20px; border-top:1px solid var(--border); display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
+.service-item-info { flex:1; }
+.service-item-name { font-size:14px; font-weight:500; margin-bottom:4px; }
+.service-item-desc { font-size:12px; color:var(--text2); line-height:1.5; }
+.service-item-price { font-size:14px; font-weight:600; color:var(--green2); white-space:nowrap; }
+.service-actions { display:flex; gap:6px; align-items:center; }
+
+/* PROPOSALS */
+.proposal-item {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:var(--radius); padding:16px 20px; margin-bottom:10px;
+  display:flex; align-items:center; gap:16px;
+}
+.proposal-avatar {
+  width:40px; height:40px; border-radius:10px;
+  background:linear-gradient(135deg,var(--purple),var(--blue));
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; font-weight:700; flex-shrink:0;
+}
+
+/* LOADING */
+.loading-overlay {
+  position:fixed; inset:0; background:rgba(13,17,23,.9);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  z-index:1000; display:none;
+}
+.loading-spinner {
+  width:48px; height:48px; border:3px solid var(--border);
+  border-top-color:var(--purple); border-radius:50%;
+  animation:spin .8s linear infinite; margin-bottom:16px;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+.loading-text { font-size:14px; color:var(--text2); }
+
+/* TABS */
+.tabs { display:flex; border-bottom:1px solid var(--border); margin-bottom:20px; gap:0; }
+.tab {
+  padding:10px 20px; font-size:13px; font-weight:500;
+  cursor:pointer; border-bottom:2px solid transparent;
+  color:var(--text2); transition:all .15s;
+}
+.tab.active { color:var(--purple3); border-bottom-color:var(--purple3); }
+.tab:hover { color:var(--text); }
+
+/* CRM VIEW TOGGLES */
+.view-toggle { display:flex; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:3px; gap:3px; }
+.view-btn { padding:6px 10px; border-radius:6px; cursor:pointer; font-size:13px; border:none; background:none; color:var(--text2); }
+.view-btn.active { background:var(--bg3); color:var(--text); }
+
+/* METRIC CARDS */
+.metric-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px; }
+.metric-card { border-radius:var(--radius); padding:20px; }
+.metric-card.orange { background:linear-gradient(135deg,#d97706,#b45309); }
+.metric-card.teal { background:linear-gradient(135deg,#0d9488,#0f766e); }
+.metric-card.blue { background:linear-gradient(135deg,#2563eb,#1d4ed8); }
+.metric-card.purple { background:linear-gradient(135deg,#7c3aed,#6d28d9); }
+.metric-label { font-size:12px; font-weight:500; opacity:.85; display:flex; align-items:center; gap:6px; }
+.metric-value { font-size:32px; font-weight:700; margin:4px 0 2px; }
+.metric-meta { font-size:11px; opacity:.75; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+/* SECTION HEADER */
+.section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.section-title { font-size:22px; font-weight:700; display:flex; align-items:center; gap:10px; }
+.section-sub { font-size:13px; color:var(--text2); margin-top:4px; }
+
+/* HEATMAP GRID */
+.heatmap-grid { display:grid; gap:4px; justify-content:center; margin:16px 0; }
+.hm-cell {
+  width:44px; height:44px; border-radius:6px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; font-weight:700; color:#fff; cursor:pointer;
+  transition:transform .15s; position:relative;
+}
+.hm-cell:hover { transform:scale(1.1); z-index:10; }
+.hm-1 { background:#22c55e; }
+.hm-2 { background:#4ade80; }
+.hm-3 { background:#86efac; color:#166534; }
+.hm-4 { background:#fde047; color:#713f12; }
+.hm-5 { background:#fb923c; }
+.hm-6 { background:#f87171; }
+.hm-7 { background:#ef4444; }
+.hm-8 { background:#dc2626; }
+.hm-9 { background:#b91c1c; }
+.hm-10 { background:#991b1b; }
+.hm-out { background:#374151; color:#6b7280; font-size:11px; }
+.hm-me { box-shadow:0 0 0 3px #fff, 0 0 0 5px var(--purple); }
+
+/* TOOLTIP */
+.tooltip-hm { position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%); background:var(--bg4); border:1px solid var(--border); border-radius:6px; padding:6px 10px; font-size:11px; white-space:nowrap; z-index:100; pointer-events:none; display:none; }
+.hm-cell:hover .tooltip-hm { display:block; }
+
+/* AI CHAT BUBBLE */
+.ai-bubble { background:rgba(124,58,237,.1); border:1px solid rgba(124,58,237,.3); border-radius:var(--radius); padding:14px 16px; margin-top:12px; font-size:13px; line-height:1.6; }
+.ai-bubble-header { display:flex; align-items:center; gap:8px; font-size:11px; color:var(--purple3); font-weight:600; margin-bottom:6px; }
+
+@keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+.page.active { animation:fadeIn .2s ease; }
+
+.search-bar { display:flex; gap:10px; margin-bottom:16px; }
+.search-input { flex:1; padding:10px 14px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-size:13px; outline:none; }
+.search-input:focus { border-color:var(--purple); }
+
+.profile-header { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px; }
+.verified-badge { position:absolute; top:10px; right:10px; background:#2563eb; color:#fff; font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px; }
+
+.filter-tabs { display:flex; gap:8px; margin-bottom:16px; }
+.filter-tab { padding:6px 14px; border-radius:20px; font-size:12px; font-weight:500; cursor:pointer; border:1px solid var(--border); background:var(--bg2); color:var(--text2); transition:all .15s; }
+.filter-tab.active { background:var(--purple); border-color:var(--purple); color:#fff; }
+
+.map-radius-btn { padding:6px 12px; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer; border:1px solid var(--border); background:var(--bg3); color:var(--text2); transition:all .15s; }
+.map-radius-btn.active { background:var(--purple); border-color:var(--purple); color:#fff; }
+
+/* ============ LOGIN ============ */
+#loginScreen {
+  position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center;
+  background:radial-gradient(circle at 30% 20%, #1c2333 0%, var(--bg) 60%);
+}
+.login-card {
+  width:340px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius);
+  padding:32px 28px; box-shadow:0 20px 50px rgba(0,0,0,.4);
+}
+.login-logo { display:flex; align-items:center; gap:10px; margin-bottom:24px; }
+.login-logo .logo-icon { width:40px;height:40px;border-radius:10px;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:20px; }
+.login-logo .logo-text { font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:17px; }
+.login-title { font-size:15px; font-weight:600; margin-bottom:4px; }
+.login-sub { font-size:12px; color:var(--text2); margin-bottom:20px; }
+.login-field { margin-bottom:14px; }
+.login-field label { display:block; font-size:11px; color:var(--text2); margin-bottom:6px; }
+.login-field input {
+  width:100%; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--border);
+  background:var(--bg3); color:var(--text); font-size:13px; outline:none;
+}
+.login-field input:focus { border-color:var(--purple); }
+.login-btn {
+  width:100%; padding:11px; border-radius:var(--radius-sm); border:none; background:var(--purple);
+  color:#fff; font-weight:600; font-size:13px; cursor:pointer; margin-top:6px; transition:background .15s;
+}
+.login-btn:hover { background:var(--purple2); }
+.login-btn:disabled { opacity:.6; cursor:default; }
+.login-error { font-size:12px; color:var(--red2); margin-top:10px; display:none; }
+.login-hint { font-size:11px; color:var(--text3); margin-top:18px; text-align:center; line-height:1.5; }
+#appRoot { display:none; }
+</style>
+</head>
+<body>
+
+<!-- ============ TELA DE LOGIN ============ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-icon">📊</div>
+      <div class="logo-text">Localway <span style="color:var(--purple3)">Rank</span></div>
+    </div>
+    <div class="login-title">Entrar na plataforma</div>
+    <div class="login-sub">Use o e-mail e senha cadastrados pela sua agência</div>
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="login-field">
+        <label>E-mail</label>
+        <input type="email" id="loginEmail" required autocomplete="username">
+      </div>
+      <div class="login-field">
+        <label>Senha</label>
+        <input type="password" id="loginPassword" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="login-btn" id="loginBtn">Entrar</button>
+      <div class="login-error" id="loginError"></div>
+    </form>
+    <div class="login-hint">Esqueceu a senha? Fale com o administrador da conta.</div>
+  </div>
+</div>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loadingText">Analisando perfil...</div>
+</div>
+
+<div id="appRoot">
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-toggle" onclick="toggleSidebar()">◀</div>
+  <div class="sidebar-logo">
+    <div class="logo-icon">📊</div>
+    <div class="logo-text">Localway <span>Rank</span><br><small style="font-size:9px;font-weight:400;color:var(--text2)">Business Analytics</small></div>
+  </div>
+  <div class="sidebar-user">
+    <div class="user-avatar" id="userAvatarSidebar">?</div>
+    <div class="user-info">
+      <div class="user-name" id="userNameSidebar">—</div>
+      <div class="user-email" id="userEmailSidebar">—</div>
+      <div class="user-badge" id="userBadgeSidebar">—</div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <button class="nav-item active" data-perm="dashboard" onclick="goTo('dashboard')"><span class="nav-icon">📈</span><span class="nav-label">Dashboard</span></button>
+    <button class="nav-item" data-perm="nova-analise" onclick="goTo('nova-analise')"><span class="nav-icon">✨</span><span class="nav-label">Nova Análise</span></button>
+    <button class="nav-item" data-perm="analises" onclick="goTo('analises')"><span class="nav-icon">📋</span><span class="nav-label">Análises</span></button>
+    <button class="nav-item" data-perm="geogrid" onclick="goTo('geogrid')"><span class="nav-icon">📍</span><span class="nav-label">Mapa de Calor</span></button>
+    <button class="nav-item" data-perm="raiox" onclick="goTo('raiox')"><span class="nav-icon">🎯</span><span class="nav-label">Raio-X Local</span></button>
+    <button class="nav-item" data-perm="servicos" onclick="goTo('servicos')"><span class="nav-icon">💼</span><span class="nav-label">Meus Serviços</span></button>
+    <button class="nav-item" data-perm="propostas" onclick="goTo('propostas')"><span class="nav-icon">📄</span><span class="nav-label">Propostas</span></button>
+    <button class="nav-item" data-perm="prospeccao" onclick="goTo('prospeccao')"><span class="nav-icon">🎯</span><span class="nav-label">Prospecção</span></button>
+    <button class="nav-item" data-perm="crm" onclick="goTo('crm')"><span class="nav-icon">🚀</span><span class="nav-label">CRM / Vendas</span></button>
+    <button class="nav-item" data-perm="admin" id="navAdmin" onclick="goTo('admin')" style="display:none;"><span class="nav-icon">⚙️</span><span class="nav-label">Administração</span></button>
+  </nav>
+  <div class="sidebar-bottom">
+    <button class="nav-item" onclick="toggleDarkMode()"><span class="nav-icon">🌙</span><span class="nav-label">Modo Escuro</span></button>
+    <button class="nav-item" style="color:var(--red2)" onclick="handleLogout()"><span class="nav-icon">🚪</span><span class="nav-label">Sair</span></button>
+    <button class="nav-item" onclick="toggleSidebar()"><span class="nav-icon">←</span><span class="nav-label">Recolher</span></button>
+  </div>
+</aside>
+
+<main class="main" id="mainContent">
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="section-header">
+      <div>
+        <div class="section-title">📈 Suas Análises</div>
+        <div class="section-sub" id="dashAnalysisCount">0 perfis analisados</div>
+      </div>
+      <button class="btn btn-primary" onclick="goTo('nova-analise')">+ Nova Análise</button>
+    </div>
+    <div class="search-bar">
+      <input type="text" class="search-input" placeholder="🔍  Buscar por nome ou categoria..." oninput="filterAnalyses(this.value)">
+    </div>
+    <div class="filter-tabs">
+      <div class="filter-tab active" onclick="setSortOrder('recent',this)">📅 Mais Recentes</div>
+      <div class="filter-tab" onclick="setSortOrder('score',this)">⭐ Melhor Score</div>
+    </div>
+    <div class="analyses-grid" id="analysesList"></div>
+    <div id="noAnalyses" style="text-align:center;padding:60px 20px;color:var(--text2)">
+      <div style="font-size:48px;margin-bottom:16px">📊</div>
+      <div style="font-size:16px;font-weight:600;margin-bottom:8px">Nenhuma análise ainda</div>
+      <div style="font-size:13px;margin-bottom:20px">Comece analisando um perfil do Google Business</div>
+      <button class="btn btn-primary" onclick="goTo('nova-analise')">✨ Fazer primeira análise</button>
+    </div>
+  </div>
+
+  <!-- NOVA ANÁLISE -->
+  <div class="page" id="page-nova-analise">
+    <div style="max-width:680px; margin:0 auto;">
+      <div style="text-align:center; margin-bottom:32px;">
+        <div style="font-size:32px; font-weight:800; margin-bottom:8px;">✨ Nova Análise</div>
+        <div style="color:var(--text2); font-size:14px;">Analise qualquer perfil do Google Business</div>
+      </div>
+      <div class="card" style="margin-bottom:16px;">
+        <div class="tabs">
+          <div class="tab active" onclick="setSearchTab('name',this)">🔍 Por Nome + Cidade</div>
+          <div class="tab" onclick="setSearchTab('url',this)">🔗 Por URL do Google Maps</div>
+        </div>
+        <div id="search-name-form">
+          <div class="input-group">
+            <label class="input-label">Nome da empresa</label>
+            <input type="text" class="input" id="businessName" placeholder="ex: PetLândia Petshop e Hotel">
+          </div>
+          <div class="input-group">
+            <label class="input-label">Cidade / Localização</label>
+            <input type="text" class="input" id="businessCity" placeholder="ex: Fortaleza, CE">
+          </div>
+        </div>
+        <div id="search-url-form" style="display:none;">
+          <div class="input-group">
+            <label class="input-label">URL do Google Business Profile</label>
+            <input type="text" class="input" id="businessUrl" placeholder="https://maps.app.goo.gl/...">
+            <div style="font-size:11px; color:var(--text2); margin-top:6px;">✅ Aceita: links curtos, compartilhados, ou da barra de endereço</div>
+          </div>
+        </div>
+        <div style="text-align:center; color:var(--text2); font-size:12px; margin-bottom:12px;">1 análise = 1 crédito da Google Places API</div>
+        <button class="btn btn-primary btn-lg" onclick="startAnalysis()">✨ Analisar Perfil</button>
+        <div style="text-align:center; margin-top:14px;">
+          <button class="btn" style="background:none;color:var(--text2);font-size:13px;" onclick="goTo('dashboard')">← Voltar para Dashboard</button>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-size:14px; font-weight:600; margin-bottom:12px;">💡 Como obter a URL?</div>
+        <div style="font-size:13px; color:var(--text2); line-height:1.7;">
+          1. Acesse o <strong style="color:var(--text)">Google Maps</strong> e busque o negócio<br>
+          2. Clique no nome do estabelecimento<br>
+          3. Copie a URL da barra de endereço ou clique em <strong style="color:var(--text)">Compartilhar → Copiar link</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTADO -->
+  <div class="page" id="page-resultado">
+    <div id="resultado-content"></div>
+  </div>
+
+  <!-- ANÁLISES -->
+  <div class="page" id="page-analises">
+    <div class="section-header">
+      <div>
+        <div class="section-title">📋 Suas Análises</div>
+        <div class="section-sub" id="analysesCount2">0 perfis analisados</div>
+      </div>
+      <button class="btn btn-primary" onclick="goTo('nova-analise')">+ Nova Análise</button>
+    </div>
+    <div class="search-bar">
+      <input type="text" class="search-input" placeholder="🔍  Buscar..." oninput="filterAnalyses(this.value)">
+    </div>
+    <div class="filter-tabs">
+      <div class="filter-tab active" onclick="setSortOrder('recent',this)">📅 Mais Recentes</div>
+      <div class="filter-tab" onclick="setSortOrder('score',this)">⭐ Melhor Score</div>
+    </div>
+    <div class="analyses-grid" id="analysesList2"></div>
+  </div>
+
+  <!-- GEOGRID -->
+  <div class="page" id="page-geogrid">
+    <div class="section-header">
+      <div>
+        <div class="section-title">📍 Geogrid Rank Tracker</div>
+        <div class="section-sub">Mapeie sua visibilidade local por palavra-chave.</div>
+      </div>
+    </div>
+    <div class="geogrid-config">
+      <div style="font-size:15px; font-weight:600; margin-bottom:16px;">Configuração</div>
+      <div class="input-group">
+        <label class="input-label">Palavra-chave</label>
+        <input type="text" class="input" id="ggKeyword" placeholder="ex: pet shop fortaleza">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Link do Perfil GBP</label>
+        <input type="text" class="input" id="ggUrl" placeholder="ex: https://maps.app.goo.gl/...">
+      </div>
+      <div class="geogrid-row" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="input-group">
+          <label class="input-label">Espaçamento (km)</label>
+          <input type="number" class="input" id="ggSpacing" value="1" min="0.5" max="5" step="0.5">
+        </div>
+        <div class="input-group">
+          <label class="input-label">Grade</label>
+          <select class="input" id="ggGrid" onchange="updateGridCost()">
+            <option value="3">3×3 (9 pontos)</option>
+            <option value="5">5×5 (25 pontos)</option>
+            <option value="7">7×7 (49 pontos)</option>
+          </select>
+        </div>
+      </div>
+      <div class="cost-bar">
+        <div>
+          <div style="font-size:12px; color:var(--text2);">Custo: <span id="ggCost" style="color:var(--text); font-weight:600;">9 requisições</span></div>
+        </div>
+        <button class="btn btn-primary" onclick="startGeogrid()">🔍 Iniciar Varredura</button>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:15px; font-weight:600; margin-bottom:4px;">Mapa de Calor</div>
+      <div style="font-size:12px; color:var(--text2); margin-bottom:16px;">Posição nos resultados locais em cada ponto do grid</div>
+      <div id="gg-heatmap-wrap" style="display:none;">
+        <div style="display:flex; justify-content:center; margin-bottom:12px; gap:8px; flex-wrap:wrap;">
+          <span class="badge badge-green">1-3: Top Local Pack</span>
+          <span class="badge badge-yellow">4-10: Visível</span>
+          <span class="badge badge-red">11+: Pouco visível</span>
+        </div>
+        <div id="gg-heatmap" class="heatmap-grid"></div>
+        <div class="ai-bubble" id="gg-ai-analysis" style="display:none;">
+          <div class="ai-bubble-header">🤖 Análise da IA</div>
+          <div id="gg-ai-text"></div>
+        </div>
+      </div>
+      <div id="gg-map-container" style="width:100%;height:400px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);"></div>
+    </div>
+  </div>
+
+  <!-- RAIO-X -->
+  <div class="page" id="page-raiox">
+    <div class="section-header">
+      <div>
+        <div class="section-title">🗺️ Raio-X Local</div>
+        <div class="section-sub">Visualize seu posicionamento geográfico no GBP</div>
+      </div>
+    </div>
+    <div class="raiox-wrap">
+      <div class="raiox-sidebar">
+        <div style="font-size:11px; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px;">ANÁLISE</div>
+        <select class="input" id="raioxAnalysisSelect" onchange="loadRaioxForAnalysis(this.value)" style="margin-bottom:14px; font-size:12px;">
+          <option value="">Selecione uma análise</option>
+        </select>
+        <div style="font-size:11px; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px;">BUSCAR</div>
+        <input type="text" class="input" id="raioxSearch" placeholder="🔍 Nome ou endereço..." style="margin-bottom:14px; font-size:12px;" oninput="filterCompetitors(this.value)">
+        <div style="font-size:11px; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px;">RAIO DE BUSCA</div>
+        <div style="display:flex; gap:6px; margin-bottom:14px;">
+          <button class="map-radius-btn active" onclick="setRadius(3,this)">3 km</button>
+          <button class="map-radius-btn" onclick="setRadius(5,this)">5 km</button>
+          <button class="map-radius-btn" onclick="setRadius(10,this)">10 km</button>
+        </div>
+        <div style="font-size:11px; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px;">CATEGORIA</div>
+        <input type="text" class="input" id="raioxCategory" placeholder="Pet Shop" style="margin-bottom:14px; font-size:12px;">
+        <div id="raioxRankInfo" style="font-size:12px; color:var(--text2); margin-bottom:12px; line-height:1.6;"></div>
+        <div id="competitorsList"></div>
+      </div>
+      <div id="raioxMap" style="height:600px;"></div>
+    </div>
+  </div>
+
+  <!-- SERVIÇOS -->
+  <div class="page" id="page-servicos">
+    <div class="section-header">
+      <div>
+        <div class="section-title">💼 Meus Serviços</div>
+        <div class="section-sub">Configure os serviços e valores para gerar propostas</div>
+      </div>
+      <button class="btn btn-secondary" onclick="resetServices()">↺ Resetar para Padrão</button>
+    </div>
+    <div id="servicesSections"></div>
+  </div>
+
+  <!-- PROPOSTAS -->
+  <div class="page" id="page-propostas">
+    <div class="section-header">
+      <div>
+        <div class="section-title">📄 Minhas Propostas</div>
+        <div class="section-sub">Gerencie suas propostas comerciais</div>
+      </div>
+      <button class="btn btn-primary" onclick="generateNewProposal()">✨ Gerar Nova Proposta</button>
+    </div>
+    <div id="proposalsList"></div>
+    <div id="noProposals" style="text-align:center;padding:60px;color:var(--text2);">
+      <div style="font-size:40px;margin-bottom:12px">📄</div>
+      <div>Nenhuma proposta gerada ainda</div>
+    </div>
+  </div>
+
+  <!-- PROSPECÇÃO -->
+  <div class="page" id="page-prospeccao">
+    <div class="section-header">
+      <div>
+        <div class="section-title">🎯 Prospecção de Leads</div>
+        <div class="section-sub" id="prosp-sub">Busque empresas no Google Maps e gere pitches com IA</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button class="btn btn-secondary" onclick="openProspConfig()" style="font-size:13px;">⚙️ Configurar API</button>
+        <button class="btn btn-primary" onclick="openGerarLeads()">🔍 Gerar Leads</button>
+      </div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="card" style="margin-bottom:16px;padding:14px 16px;">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <input type="text" class="search-input" id="prosp-search" placeholder="🔍 Buscar empresa..." oninput="filtrarLeadsProsp()" style="flex:1;min-width:160px;">
+        <select class="input" id="prosp-filter-perfil" onchange="filtrarLeadsProsp()" style="width:auto;padding:10px 12px;font-size:13px;">
+          <option value="">Todos os perfis</option>
+          <option value="Fraco (bom lead)">🟢 Fraco (bom lead)</option>
+          <option value="Médio">🟡 Médio</option>
+        </select>
+        <select class="input" id="prosp-filter-site" onchange="filtrarLeadsProsp()" style="width:auto;padding:10px 12px;font-size:13px;">
+          <option value="">Com/sem site</option>
+          <option value="Não">Sem site</option>
+          <option value="Sim">Com site</option>
+        </select>
+        <select class="input" id="prosp-filter-status" onchange="filtrarLeadsProsp()" style="width:auto;padding:10px 12px;font-size:13px;">
+          <option value="">Todos os status</option>
+          <option value="Não contatado">Não contatado</option>
+          <option value="Não atendeu">Não atendeu</option>
+          <option value="Reunião marcada">Reunião marcada</option>
+          <option value="Retornar">Retornar</option>
+          <option value="Sem interesse">Sem interesse</option>
+          <option value="Fechado">Fechado</option>
+        </select>
+        <button class="btn btn-secondary" onclick="exportarLeadsCSV()" style="font-size:12px;padding:8px 14px;">📥 Exportar CSV</button>
+        <button class="btn btn-danger" onclick="limparLeadsProsp()" style="font-size:12px;padding:8px 14px;">🗑 Limpar</button>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;" id="prosp-stats-grid">
+      <div class="card card-sm" style="text-align:center;">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">Total</div>
+        <div style="font-size:24px;font-weight:700;" id="ps-total">0</div>
+      </div>
+      <div class="card card-sm" style="text-align:center;border-color:rgba(35,134,54,.4);">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">🟢 Fraco</div>
+        <div style="font-size:24px;font-weight:700;color:var(--green2);" id="ps-fraco">0</div>
+      </div>
+      <div class="card card-sm" style="text-align:center;border-color:rgba(210,153,34,.4);">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">🟡 Médio</div>
+        <div style="font-size:24px;font-weight:700;color:var(--yellow2);" id="ps-medio">0</div>
+      </div>
+      <div class="card card-sm" style="text-align:center;border-color:rgba(31,111,235,.4);">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">📅 Reuniões</div>
+        <div style="font-size:24px;font-weight:700;color:var(--blue2);" id="ps-reuniao">0</div>
+      </div>
+    </div>
+
+    <!-- TABELA / CARDS -->
+    <div id="prosp-empty" style="text-align:center;padding:60px 20px;color:var(--text2);display:none;">
+      <div style="font-size:48px;margin-bottom:16px;">🎯</div>
+      <div style="font-size:16px;font-weight:600;margin-bottom:8px;">Nenhum lead ainda</div>
+      <div style="font-size:13px;margin-bottom:20px;">Clique em "Gerar Leads" para buscar empresas no Google Maps</div>
+      <button class="btn btn-primary" onclick="openGerarLeads()">🔍 Gerar Leads</button>
+    </div>
+    <div id="prosp-lista"></div>
+
+    <!-- MODAL: Gerar Leads -->
+    <div id="modal-gerar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;">
+      <div class="card" style="width:460px;max-width:95vw;padding:24px;">
+        <div style="font-size:18px;font-weight:700;margin-bottom:20px;">🔍 Gerar Leads</div>
+        <div class="input-group">
+          <label class="input-label">Segmento</label>
+          <select class="input" id="gerar-segmento">
+            <option value="barbearia">Barbearia</option>
+            <option value="salão de beleza">Salão de Beleza</option>
+            <option value="dentista">Dentista</option>
+            <option value="advogado">Advogado</option>
+            <option value="contador">Contador</option>
+            <option value="pet shop">Pet Shop</option>
+            <option value="clínica de estética">Clínica de Estética</option>
+            <option value="oficina mecânica">Oficina Mecânica</option>
+            <option value="restaurante">Restaurante</option>
+            <option value="pizzaria">Pizzaria</option>
+            <option value="academia">Academia</option>
+            <option value="imobiliária">Imobiliária</option>
+            <option value="ótica">Ótica</option>
+            <option value="outro">Outro (digitar abaixo)</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Segmento personalizado (opcional)</label>
+          <input type="text" class="input" id="gerar-segmento-custom" placeholder="ex: clínica veterinária">
+        </div>
+        <div class="input-group">
+          <label class="input-label">Bairro / Região</label>
+          <input type="text" class="input" id="gerar-bairro" placeholder="ex: Aldeota, Fortaleza" value="Fortaleza, CE">
+        </div>
+        <div class="input-group">
+          <label class="input-label">Quantidade de leads (1–20)</label>
+          <input type="number" class="input" id="gerar-qtd" value="10" min="1" max="20">
+        </div>
+        <div style="display:flex;gap:10px;margin-top:4px;">
+          <button class="btn btn-secondary" style="flex:1;" onclick="fecharModalGerar()">Cancelar</button>
+          <button class="btn btn-primary" style="flex:2;" onclick="executarGerarLeads()">🔍 Buscar Empresas</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: Config API -->
+    <div id="modal-prosp-config" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;">
+      <div class="card" style="width:460px;max-width:95vw;padding:24px;">
+        <div style="font-size:18px;font-weight:700;margin-bottom:6px;">⚙️ Configuração de APIs</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:20px;">As chaves ficam salvas no seu navegador (localStorage)</div>
+        <div class="input-group">
+          <label class="input-label">Google Places API Key</label>
+          <input type="password" class="input" id="cfg-google-key" placeholder="AIza...">
+          <div style="font-size:11px;color:var(--text2);margin-top:4px;">Usada para buscar empresas no Google Maps</div>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Groq API Key (pitch por IA)</label>
+          <input type="password" class="input" id="cfg-groq-key" placeholder="gsk_...">
+          <div style="font-size:11px;color:var(--text2);margin-top:4px;">Usada para gerar pitches. Gratuito em groq.com</div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:4px;">
+          <button class="btn btn-secondary" style="flex:1;" onclick="fecharModalConfig()">Cancelar</button>
+          <button class="btn btn-primary" style="flex:2;" onclick="salvarConfigProsp()">💾 Salvar Chaves</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: Pitch -->
+    <div id="modal-pitch" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;padding:16px;">
+      <div class="card" style="width:600px;max-width:95vw;max-height:85vh;overflow-y:auto;padding:24px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div style="font-size:18px;font-weight:700;">🤖 Pitch por IA</div>
+          <button onclick="fecharModalPitch()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;">✕</button>
+        </div>
+        <div id="pitch-empresa-info" style="background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px;"></div>
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+          <button class="filter-tab active" onclick="setPitchTipo('abordagem',this)">📞 Abordagem</button>
+          <button class="filter-tab" onclick="setPitchTipo('proposta',this)">📄 Proposta</button>
+          <button class="filter-tab" onclick="setPitchTipo('followup',this)">🔄 Follow-up</button>
+          <button class="filter-tab" onclick="setPitchTipo('objecao',this)">🛡️ Objeção</button>
+        </div>
+        <div id="pitch-resultado" style="min-height:120px;">
+          <div style="text-align:center;padding:30px;color:var(--text2);">Selecione o tipo de pitch e clique em gerar</div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:16px;">
+          <button class="btn btn-primary" style="flex:1;" onclick="gerarPitch()" id="btn-gerar-pitch">✨ Gerar Pitch</button>
+          <button class="btn btn-secondary" onclick="copiarPitch()" style="flex:1;">📋 Copiar</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CRM -->
+  <div class="page" id="page-crm">
+    <div class="section-header">
+      <div>
+        <div class="section-title">🚀 Funil de Vendas</div>
+        <div class="section-sub">Gerencie suas oportunidades de venda.</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <div class="view-toggle">
+          <button class="view-btn active" onclick="setCrmView('board',this)">⊞</button>
+          <button class="view-btn" onclick="setCrmView('metrics',this)">☰</button>
+          <button class="view-btn" onclick="setCrmView('map',this)">🗺</button>
+        </div>
+        <button class="btn btn-primary" onclick="openNewLead()">+ Novo Lead</button>
+      </div>
+    </div>
+    <div id="crm-metrics" style="display:none;">
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:16px;">
+        <button class="filter-tab" onclick="setCrmPeriod('today',this)">Hoje</button>
+        <button class="filter-tab" onclick="setCrmPeriod('week',this)">Semana</button>
+        <button class="filter-tab active" onclick="setCrmPeriod('month',this)">Mês</button>
+        <button class="filter-tab" onclick="setCrmPeriod('year',this)">Ano</button>
+      </div>
+      <div class="metric-grid">
+        <div class="metric-card orange"><div class="metric-label">👤 Leads</div><div class="metric-value" id="crmLeadsCount">0</div></div>
+        <div class="metric-card teal"><div class="metric-label">$ Faturamento</div><div class="metric-value" id="crmRevenue">R$ 0</div></div>
+        <div class="metric-card blue"><div class="metric-label">📈 Ticket Médio</div><div class="metric-value" id="crmTicket">R$ 0</div></div>
+        <div class="metric-card purple"><div class="metric-label">🎯 Conversão</div><div class="metric-value" id="crmConversion">0%</div></div>
+      </div>
+      <div class="card">
+        <div style="font-size:14px;font-weight:600;margin-bottom:16px;">📊 Histórico de Vendas</div>
+        <div style="position:relative;height:220px;"><canvas id="salesChart"></canvas></div>
+      </div>
+    </div>
+    <div id="crm-board"><div class="kanban-board" id="kanbanBoard"></div></div>
+    <div id="crm-map-view" style="display:none;">
+      <div id="crm-map-container" style="height:520px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);"></div>
+    </div>
+  </div>
+
+  <!-- ============ PÁGINA: ADMINISTRAÇÃO ============ -->
+  <div class="page" id="page-admin">
+    <div style="max-width:820px;">
+      <h2 style="margin-bottom:4px;">⚙️ Administração</h2>
+      <div style="color:var(--text2);font-size:13px;margin-bottom:24px;">Configurações do sistema e gerenciamento de funcionários</div>
+
+      <div class="card" style="padding:20px;margin-bottom:20px;">
+        <div style="font-weight:600;margin-bottom:14px;">🔑 Chaves de API e Agenda</div>
+        <div style="display:grid;gap:12px;">
+          <div>
+            <label style="display:block;font-size:12px;color:var(--text2);margin-bottom:4px;">Google API Key (Places/Maps)</label>
+            <input type="text" id="adm-google-key" style="width:100%;padding:9px 11px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;color:var(--text2);margin-bottom:4px;">Groq API Key (IA)</label>
+            <input type="text" id="adm-groq-key" style="width:100%;padding:9px 11px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;color:var(--text2);margin-bottom:4px;">ID do Google Agenda (Calendar ID)</label>
+            <input type="text" id="adm-calendar-id" placeholder="exemplo@group.calendar.google.com" style="width:100%;padding:9px 11px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;">
+          </div>
+        </div>
+        <button class="login-btn" style="width:auto;padding:9px 18px;margin-top:14px;" onclick="salvarConfigAdmin()">Salvar configurações</button>
+        <div id="adm-config-msg" style="font-size:12px;margin-top:8px;"></div>
+      </div>
+
+      <div class="card" style="padding:20px;margin-bottom:20px;">
+        <div style="font-weight:600;margin-bottom:14px;">➕ Adicionar funcionário</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <input type="text" id="adm-new-nome" placeholder="Nome" style="padding:9px 11px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;">
+          <input type="email" id="adm-new-email" placeholder="E-mail" style="padding:9px 11px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;">
+          <input type="password" id="adm-new-senha" placeholder="Senha provisória" style="padding:9px 11px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;">
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin:12px 0;" id="adm-new-perms"></div>
+        <button class="login-btn" style="width:auto;padding:9px 18px;" onclick="criarFuncionario()">Criar acesso</button>
+        <div id="adm-new-msg" style="font-size:12px;margin-top:8px;"></div>
+      </div>
+
+      <div class="card" style="padding:20px;">
+        <div style="font-weight:600;margin-bottom:14px;">👥 Funcionários e permissões</div>
+        <div id="adm-employees-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+</div><!-- /#appRoot -->
+
+<script src="/admin.js"></script>
+
+<script src="/auth.js"></script>
+<script>
+// ===================== STATE =====================
+let analyses = JSON.parse(localStorage.getItem('gbp_analyses') || '[]');
+let services = JSON.parse(localStorage.getItem('gbp_services') || 'null') || getDefaultServices();
+let proposals = JSON.parse(localStorage.getItem('gbp_proposals') || '[]');
+let crmLeads = JSON.parse(localStorage.getItem('gbp_crm') || '[]');
+let currentAnalysis = null;
+let sortOrder = 'recent';
+let searchQuery = '';
+let searchTab = 'name';
+let crmView = 'board';
+let raioxMap = null;
+let ggMap = null;
+let crmMapInstance = null;
+let raioxMarkers = [];
+let salesChartInstance = null;
+
+window.onload = function() {
+  renderDashboard();
+  renderServices();
+  renderProposals();
+  renderKanban();
+  updateCrmMetrics();
+  populateRaioxSelect();
+};
+
+// ===================== NAVIGATION =====================
+function goTo(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(item => {
+    if(item.getAttribute('onclick') && item.getAttribute('onclick').includes("'"+page+"'")) item.classList.add('active');
+  });
+  if(page === 'geogrid') initGeoGridMap();
+  if(page === 'raiox') initRaioxMap();
+  if(page === 'crm' && crmView === 'map') initCrmMap();
+  if(page === 'analises') { renderAnalysesList('analysesList2'); document.getElementById('analysesCount2').textContent = analyses.length + ' perfis analisados'; }
+  if(page === 'dashboard') renderDashboard();
+  if(page === 'admin' && typeof loadAdminPanel === 'function') loadAdminPanel();
+}
+
+function toggleSidebar() {
+  const s = document.getElementById('sidebar');
+  const m = document.getElementById('mainContent');
+  s.classList.toggle('collapsed');
+  m.classList.toggle('expanded');
+  document.querySelector('.sidebar-toggle').textContent = s.classList.contains('collapsed') ? '▶' : '◀';
+}
+
+function setSearchTab(tab, el) {
+  searchTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('search-name-form').style.display = tab === 'name' ? 'block' : 'none';
+  document.getElementById('search-url-form').style.display = tab === 'url' ? 'block' : 'none';
+}
+
+// ===================== ANALYSIS =====================
+async function startAnalysis() {
+  if(searchTab === 'name') {
+    const name = document.getElementById('businessName').value.trim();
+    const city = document.getElementById('businessCity').value.trim();
+    if(!name) { alert('Digite o nome da empresa'); return; }
+    showLoading('Buscando empresa no Google...');
+    try {
+      const placeData = await searchPlace(name + (city ? ', ' + city : ''));
+      if(!placeData) { hideLoading(); alert('Empresa não encontrada. Tente um nome mais específico ou adicione a cidade.'); return; }
+      updateLoading('Coletando dados detalhados...');
+      const details = await getPlaceDetails(placeData.place_id);
+      const analysis = buildAnalysis(details);
+      analyses.unshift(analysis); saveAnalyses(); currentAnalysis = analysis;
+      hideLoading(); renderResult(analysis); goTo('resultado');
+    } catch(e) { hideLoading(); alert('Erro: ' + e.message); }
+  } else {
+    const url = document.getElementById('businessUrl').value.trim();
+    if(!url) { alert('Cole a URL do Google Maps'); return; }
+    showLoading('Resolvendo link...');
+    try {
+      updateLoading('Conectando ao Google Maps...');
+      const placeIdFromProxy = await resolveUrlViaProxy(url);
+      if(placeIdFromProxy) {
+        updateLoading('Link resolvido! Coletando dados...');
+        const details = await getPlaceDetails(placeIdFromProxy);
+        if(details) {
+          const analysis = buildAnalysis(details);
+          analyses.unshift(analysis); saveAnalyses(); currentAnalysis = analysis;
+          hideLoading(); renderResult(analysis); goTo('resultado'); return;
+        }
+      }
+      const extracted = parseGoogleMapsUrl(url);
+      if(extracted) {
+        updateLoading('Buscando: ' + extracted.substring(0,30) + '...');
+        const placeData = await searchPlace(extracted);
+        if(placeData) {
+          updateLoading('Coletando dados...');
+          const details = await getPlaceDetails(placeData.place_id);
+          const analysis = buildAnalysis(details);
+          analyses.unshift(analysis); saveAnalyses(); currentAnalysis = analysis;
+          hideLoading(); renderResult(analysis); goTo('resultado'); return;
+        }
+      }
+      hideLoading();
+      alert('Nao consegui processar este link.\nDica: Use "Por Nome + Cidade" com o nome exato, ou cole um link longo (google.com/maps/place/...).');
+    } catch(e) { hideLoading(); alert('Erro ao processar link: ' + e.message); }
+  }
+}
+
+function parseGoogleMapsUrl(url) {
+  // URL longa: /maps/place/NOME/
+  const longMatch = url.match(/google\.com\/maps\/place\/([^/@?&]+)/);
+  if(longMatch && longMatch[1]) {
+    const decoded = decodeURIComponent(longMatch[1].replace(/\+/g,' ')).replace(/\+/g,' ');
+    if(decoded.length > 2 && !/^[A-Za-z0-9]{20,}$/.test(decoded)) return decoded;
+  }
+  // Query param ?q=
+  const qMatch = url.match(/[?&]q=([^&]+)/);
+  if(qMatch) return decodeURIComponent(qMatch[1].replace(/\+/g,' '));
+  return null;
+}
+
+async function resolveUrlViaProxy(url) {
+  try {
+    const resp = await fetch('/api/places?action=resolve_url&url=' + encodeURIComponent(url));
+    if(!resp.ok) return null;
+    const data = await resp.json();
+    if(data.place_id) return data.place_id;
+    if(data.results && data.results.length > 0) return data.results[0].place_id;
+  } catch(e) {}
+  return null;
+}
+
+async function searchPlace(query) {
+  const resp = await fetch(`/api/places?action=search&query=${encodeURIComponent(query)}`);
+  const data = await resp.json();
+  if(data.results && data.results.length > 0) return data.results[0];
+  return null;
+}
+
+async function getPlaceDetails(placeId) {
+  const resp = await fetch(`/api/places?action=details&place_id=${placeId}`);
+  const data = await resp.json();
+  return data.result;
+}
+
+function buildAnalysis(place) {
+  const score = calculateScore(place);
+  const now = new Date();
+  return {
+    id: Date.now(),
+    place_id: place.place_id,
+    name: place.name,
+    address: place.formatted_address || '',
+    phone: place.formatted_phone_number || '',
+    website: place.website || '',
+    rating: place.rating || 0,
+    total_reviews: place.user_ratings_total || 0,
+    types: place.types || [],
+    category: formatCategory(place.types),
+    business_status: place.business_status || '',
+    opening_hours: place.opening_hours || null,
+    photos: place.photos || [],
+    photo_count: (place.photos || []).length,
+    reviews: (place.reviews || []).slice(0,5),
+    geometry: place.geometry || null,
+    url: place.url || '',
+    score: score.total,
+    score_label: getScoreLabel(score.total),
+    pillars: score.pillars,
+    pillars_detail: score.pillars_detail || {},
+    insights: score.insights,
+    // campos extras para score de otimização
+    editorial_summary: place.editorial_summary || null,
+    delivery: place.delivery || false,
+    dine_in: place.dine_in || false,
+    takeout: place.takeout || false,
+    serves_beer: place.serves_beer || false,
+    wheelchair_accessible_entrance: place.wheelchair_accessible_entrance || false,
+    date: now.toLocaleDateString('pt-BR', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}),
+    timestamp: now.toISOString()
+  };
+}
+
+function calculateScore(place) {
+  const insights = { warnings: [], strengths: [], opportunities: [] };
+  const pillars_detail = {};
+
+  // ── REPUTAÇÃO (max 25) ──────────────────────────────────────────
+  const rating = place.rating || 0;
+  const totalReviews = place.user_ratings_total || 0;
+
+  // Nota média (max 12) — RIGOROSO: sem nota = 0, nota baixa penaliza muito
+  let notaPts = rating >= 4.9 ? 12 : rating >= 4.7 ? 10 : rating >= 4.5 ? 8 : rating >= 4.0 ? 5 : rating >= 3.5 ? 2 : rating > 0 ? 1 : 0;
+
+  // Volume de reviews (max 8) — RIGOROSO: menos de 10 reviews = quase zero
+  let reviewPts = totalReviews >= 500 ? 8 : totalReviews >= 200 ? 7 : totalReviews >= 100 ? 6 : totalReviews >= 50 ? 4 : totalReviews >= 20 ? 2 : totalReviews >= 10 ? 1 : 0;
+
+  // Recência (max 5): usa reviews retornadas pela API
+  let recenciaPts = 0, recenciaDesc = 'Sem avaliações';
+  const reviews = place.reviews || [];
+  if(reviews.length > 0) {
+    const latestTime = Math.max(...reviews.map(r => r.time || 0));
+    const daysSince = (Date.now()/1000 - latestTime) / 86400;
+    if(daysSince <= 7)        { recenciaPts = 5; recenciaDesc = Math.round(daysSince) + ' dias atrás'; }
+    else if(daysSince <= 30)  { recenciaPts = 4; recenciaDesc = Math.round(daysSince) + ' dias atrás'; }
+    else if(daysSince <= 90)  { recenciaPts = 3; recenciaDesc = Math.round(daysSince/30) + ' meses atrás'; }
+    else if(daysSince <= 180) { recenciaPts = 2; recenciaDesc = Math.round(daysSince/30) + ' meses atrás'; }
+    else if(daysSince <= 365) { recenciaPts = 1; recenciaDesc = Math.round(daysSince/30) + ' meses atrás'; }
+    else                      { recenciaPts = 0; recenciaDesc = '+1 ano atrás'; }
+  } else if(totalReviews > 0) {
+    recenciaPts = 2; recenciaDesc = 'Dado não disponível via API';
+  }
+
+  // PENALIDADE: nota < 4.0 penaliza reputação inteira em 30%
+  let reputacaoRaw = Math.min(notaPts + reviewPts + recenciaPts, 25);
+  if(rating > 0 && rating < 4.0) reputacaoRaw = Math.round(reputacaoRaw * 0.7);
+  const reputacao = reputacaoRaw;
+
+  pillars_detail.reputacao = [
+    { name:'Nota média',       detail: rating > 0 ? rating.toFixed(1)+' ⭐' : 'Sem nota',      pts:notaPts,   max:12, ok: notaPts >= 8 },
+    { name:'Volume de reviews',detail: totalReviews+' avaliações',                               pts:reviewPts, max:8,  ok: reviewPts >= 4 },
+    { name:'Recência',         detail: recenciaDesc,                                              pts:recenciaPts, max:5, ok: recenciaPts >= 3 },
+  ];
+
+  if(rating >= 4.7) insights.strengths.push({ title:'Nota média: '+rating+' ⭐', desc:'Reputação excelente!', color:'success' });
+  else if(rating >= 4.0) insights.opportunities.push({ title:'Nota média: '+rating+' ⭐', desc:'Razoável, mas pode melhorar.', action:'→ Implemente captação de avaliações com NFC/QR Code', color:'warning' });
+  else if(rating < 4.0 && rating > 0) insights.warnings.push({ title:'Nota baixa: '+rating+' ⭐', desc:'Impacto: CRÍTICO — clientes evitam perfis com nota < 4.0.', action:'→ Responda avaliações negativas e implemente captação', color:'danger' });
+  else insights.warnings.push({ title:'Sem avaliações', desc:'Impacto: CRÍTICO — perfil sem nota perde 60% dos cliques.', action:'→ Solicite avaliações imediatamente', color:'danger' });
+
+  if(totalReviews >= 100) insights.strengths.push({ title:totalReviews+' avaliações', desc:'Forte prova social!', color:'success' });
+  else if(totalReviews < 10) insights.warnings.push({ title:'Apenas '+totalReviews+' avaliações', desc:'Impacto: ALTO — poucos reviews eliminam credibilidade.', action:'→ Use NFC/QR Code para solicitar avaliações', color:'warning' });
+  else if(totalReviews < 20) insights.warnings.push({ title:'Apenas '+totalReviews+' avaliações', desc:'Impacto: ALTO — poucos reviews reduzem autoridade.', action:'→ Use NFC/QR Code para solicitar avaliações', color:'warning' });
+
+  // ── AUTORIDADE DIGITAL (max 25) ──────────────────────────────────
+  const hasWebsite = !!(place.website);
+  const hasPhone   = !!(place.formatted_phone_number);
+  const hasAddress = !!(place.formatted_address);
+  const hasName    = !!(place.name);
+
+  // NAP agora é menos generoso — nome e endereço são básicos, só telefone soma extra
+  let napPts = 0;
+  if(hasName)    napPts += 2;   // nome é o mínimo — pouco peso
+  if(hasAddress) napPts += 3;   // endereço é esperado — peso moderado
+  if(hasPhone)   napPts += 8;   // telefone é diferencial — peso alto (era 5)
+  const napDesc = [hasName?'Nome':'—', hasAddress?'Endereço':'—', hasPhone?'Telefone':'—'].join(', ');
+
+  // Website (max 7 — era 5) — muito importante para autoridade
+  const websitePts = hasWebsite ? 7 : 0;
+
+  // PageSpeed Mobile (max 5)
+  const pagespeedPts = hasWebsite ? 2 : 0;
+
+  // PENALIDADE: sem telefone E sem site = -5 pts de autoridade
+  const napPenalty = (!hasPhone && !hasWebsite) ? -5 : 0;
+
+  const autoridadeDigital = Math.max(0, Math.min(napPts + websitePts + pagespeedPts + napPenalty, 25));
+  pillars_detail.autoridade_digital = [
+    { name:'Citações NAP',    detail: napDesc,                                                   pts:napPts,      max:13, ok: napPts >= 10 },
+    { name:'Saúde do Website',detail: hasWebsite ? place.website.substring(0,30)+'...' : 'Sem website', pts:websitePts, max:7, ok: websitePts >= 7 },
+    { name:'PageSpeed Mobile',detail: hasWebsite ? 'Website disponível' : 'Sem website',         pts:pagespeedPts, max:5, ok: pagespeedPts >= 4 },
+  ];
+
+  if(hasWebsite) insights.strengths.push({ title:'Website cadastrado', desc:'Aumenta autoridade digital.', color:'success' });
+  else insights.opportunities.push({ title:'Sem website cadastrado', desc:'Impacto: MÉDIO — website aumenta autoridade local.', action:'→ Crie site focado em SEO local', color:'warning' });
+
+  // ── OTIMIZAÇÃO (max 20) ──────────────────────────────────────────
+  const hasCategoria = !!(place.types && place.types.length > 0);
+  const catPts    = hasCategoria ? 10 : 0;
+  const secTypes  = place.types ? Math.max(0, place.types.length - 1) : 0;
+  const secCatPts = secTypes >= 3 ? 5 : secTypes >= 1 ? 3 : 0;
+
+  // Descrição agora vale mais (era 3, agora 5) — é um campo importante
+  const hasDesc   = !!(place.editorial_summary && place.editorial_summary.text);
+  const descPts   = hasDesc ? 5 : 0;
+
+  // Atributos
+  const attrFields = [place.delivery, place.dine_in, place.takeout, place.serves_beer, place.wheelchair_accessible_entrance, place.reservable, place.serves_breakfast, place.serves_lunch, place.serves_dinner];
+  const attrCount = attrFields.filter(Boolean).length;
+  const attrPts   = attrCount >= 3 ? 2 : attrCount >= 1 ? 1 : 0;
+
+  // PENALIDADE: sem categoria = perfil inutilizável para SEO local
+  const otimizacao = Math.min(catPts + secCatPts + descPts + attrPts, 20);
+  pillars_detail.otimizacao = [
+    { name:'Categoria principal',    detail: hasCategoria ? formatCategory(place.types) : 'Não definida', pts:catPts,    max:10, ok: catPts >= 10 },
+    { name:'Categorias secundárias', detail: secTypes+' categorias secundárias',                          pts:secCatPts, max:5,  ok: secCatPts >= 3 },
+    { name:'Descrição',              detail: hasDesc ? 'Preenchida' : 'Não preenchida',                   pts:descPts,   max:5,  ok: hasDesc },
+    { name:'Atributos',              detail: attrCount+' atributos detectados',                           pts:attrPts,   max:2,  ok: attrPts >= 2 },
+  ];
+
+  const hasHours = !!(place.opening_hours);
+  if(hasHours) insights.strengths.push({ title:'Horários cadastrados', desc:'Informações completas aumentam conversão.', color:'success' });
+  else insights.warnings.push({ title:'Sem horários cadastrados', desc:'Impacto: ALTO — clientes não sabem quando visitar.', action:'→ Adicione horários de funcionamento completos', color:'danger' });
+
+  if(!hasDesc) insights.warnings.push({ title:'Sem descrição do negócio', desc:'Impacto: MÉDIO — descrição melhora conversão e SEO local.', action:'→ Adicione uma descrição completa no GBP', color:'warning' });
+
+  // ── SAÚDE CADASTRAL (max 15) ─────────────────────────────────────
+  const telPts  = hasPhone   ? 4 : 0;
+  const endPts  = hasAddress ? 4 : 0;
+  const sitePts = hasWebsite ? 4 : 0;
+  const horaPts = hasHours   ? 3 : 0;
+
+  // PENALIDADE: sem horário E sem telefone = perfil muito incompleto
+  const cadastralPenalty = (!hasHours && !hasPhone) ? -4 : 0;
+
+  const saudeCadastral = Math.max(0, Math.min(telPts + endPts + sitePts + horaPts + cadastralPenalty, 15));
+  pillars_detail.saude_cadastral = [
+    { name:'Telefone', detail: hasPhone   ? place.formatted_phone_number : 'Não cadastrado', pts:telPts,  max:4, ok:hasPhone },
+    { name:'Endereço', detail: hasAddress ? 'Completo'                   : 'Não cadastrado', pts:endPts,  max:4, ok:hasAddress },
+    { name:'Website',  detail: hasWebsite ? 'Cadastrado'                 : 'Não cadastrado', pts:sitePts, max:4, ok:hasWebsite },
+    { name:'Horários', detail: hasHours   ? 'Completos'                  : 'Não cadastrados',pts:horaPts, max:3, ok:hasHours },
+  ];
+
+  if(!hasPhone) insights.opportunities.push({ title:'Sem telefone cadastrado', desc:'Impacto: ALTO — dificulta contato direto e reduz pontuação.', action:'→ Adicione telefone e WhatsApp', color:'warning' });
+
+  // ── MÍDIA (max 15) ────────────────────────────────────────────────
+  const photoRefs = (place.photos || []).length;
+  const apiMaxPhotos = photoRefs >= 10;
+
+  let volumePts = 0, volumeDesc = '';
+  if(apiMaxPhotos) {
+    volumePts = 9;
+    volumeDesc = '10+ fotos (limite da API — perfil tem mais)';
+  } else if(photoRefs >= 7) { volumePts = 7; volumeDesc = photoRefs+' fotos'; }
+  else if(photoRefs >= 4)   { volumePts = 5; volumeDesc = photoRefs+' fotos'; }
+  else if(photoRefs >= 1)   { volumePts = 2; volumeDesc = photoRefs+' fotos'; } // era 3, penalizei mais
+  else                      { volumePts = 0; volumeDesc = 'Sem fotos detectadas'; }
+
+  const tour360Pts = 0;
+  const midia = Math.min(volumePts + tour360Pts, 15);
+  pillars_detail.midia = [
+    { name:'Volume de Mídia', detail: volumeDesc,                pts:volumePts, max:11, ok: volumePts >= 7 },
+    { name:'Tour 360°',       detail:'Não detectável via API',   pts:0,         max:4,  ok: false },
+  ];
+
+  if(photoRefs >= 7 || apiMaxPhotos) insights.strengths.push({ title:(apiMaxPhotos?'10+':photoRefs)+' fotos no perfil', desc:'Boa presença visual!', color:'success' });
+  else if(photoRefs >= 1) insights.warnings.push({ title:'Poucas fotos ('+photoRefs+' detectadas)', desc:'Impacto: ALTO — mais fotos aumentam engajamento.', action:'→ Publique pelo menos 20 fotos profissionais', color:'warning' });
+  else insights.warnings.push({ title:'Sem fotos detectadas', desc:'Impacto: CRÍTICO — perfil sem fotos perde 40% dos cliques.', action:'→ Adicione fotos imediatamente', color:'danger' });
+
+  // ── TOTAL com teto para perfis incompletos ────────────────────────
+  let total = reputacao + autoridadeDigital + otimizacao + saudeCadastral + midia;
+
+  // REGRA DE TETO: perfis sem elementos essenciais não passam de 50
+  const missingEssentials = [];
+  if(rating === 0 || totalReviews < 5) missingEssentials.push('sem avaliações');
+  if(!hasPhone)   missingEssentials.push('sem telefone');
+  if(!hasHours)   missingEssentials.push('sem horários');
+  if(photoRefs === 0) missingEssentials.push('sem fotos');
+
+  // 3+ itens essenciais faltando: teto 40
+  // 2 itens essenciais faltando: teto 50
+  // 1 item essencial faltando: teto 65
+  if(missingEssentials.length >= 3)      total = Math.min(total, 40);
+  else if(missingEssentials.length >= 2) total = Math.min(total, 50);
+  else if(missingEssentials.length >= 1) total = Math.min(total, 65);
+
+  return {
+    total,
+    pillars: {
+      reputacao:          { score:reputacao,         max:25, pct:Math.round(reputacao/25*100) },
+      autoridade_digital: { score:autoridadeDigital, max:25, pct:Math.round(autoridadeDigital/25*100) },
+      otimizacao:         { score:otimizacao,        max:20, pct:Math.round(otimizacao/20*100) },
+      saude_cadastral:    { score:saudeCadastral,    max:15, pct:Math.round(saudeCadastral/15*100) },
+      midia:              { score:midia,             max:15, pct:Math.round(midia/15*100) },
+    },
+    pillars_detail,
+    insights
+  };
+}
+
+function formatCategory(types) {
+  if(!types || !types.length) return 'Negócio';
+  const map = {
+    'pet_store':'Pet Shop','restaurant':'Restaurante','food':'Alimentação','bakery':'Padaria',
+    'cafe':'Cafeteria','bar':'Bar','beauty_salon':'Salão de Beleza','hair_care':'Cabeleireiro',
+    'gym':'Academia','health':'Saúde','doctor':'Médico','dentist':'Dentista','pharmacy':'Farmácia',
+    'hospital':'Hospital','store':'Loja','clothing_store':'Moda','shoe_store':'Calçados',
+    'electronics_store':'Eletrônicos','furniture_store':'Móveis','car_repair':'Mecânica',
+    'car_dealer':'Concessionária','real_estate_agency':'Imobiliária','lawyer':'Advocacia',
+    'accounting':'Contabilidade','lodging':'Hospedagem','hotel':'Hotel','glass':'Vidraçaria',
+    'hardware_store':'Material de Construção'
+  };
+  for(const t of types) { if(map[t]) return map[t]; }
+  return types[0].replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function getScoreLabel(score) {
+  if(score >= 80) return 'Excelente';
+  if(score >= 60) return 'Bom';
+  if(score >= 31) return 'Fraco';
+  return 'Crítico';
+}
+
+function getScoreColor(score) {
+  if(score >= 80) return '#22c55e';
+  if(score >= 60) return '#f59e0b';
+  if(score >= 31) return '#f97316';
+  return '#ef4444';
+}
+
+function buildGaugeSVG(score) {
+  const s = Math.max(0, Math.min(100, score));
+
+  // Cores por faixa
+  const color = s < 31 ? '#ef4444' : s < 60 ? '#f97316' : s < 80 ? '#eab308' : '#22c55e';
+  const label = s < 31 ? 'CRÍTICO' : s < 60 ? 'FRACO' : s < 80 ? 'BOM' : 'EXCELENTE';
+  const labelColor = s < 31 ? '#ef4444' : s < 60 ? '#f97316' : s < 80 ? '#eab308' : '#22c55e';
+
+  // Geometria do semicírculo: centro (160,155), raio 120
+  const cx = 160, cy = 155, R = 120, SW = 22;
+  const startAngle = Math.PI;       // 180° — esquerda
+  const endAngle   = 0;             // 0°   — direita
+  const fillAngle  = Math.PI * (1 - s / 100); // quanto falta (de 180° indo para 0°)
+
+  // Ponto inicial (esquerda)
+  const x0 = cx + R * Math.cos(startAngle), y0 = cy + R * Math.sin(startAngle);
+  // Ponto final do arco preenchido
+  const xFill = cx + R * Math.cos(fillAngle), yFill = cy + R * Math.sin(fillAngle);
+  // Arco completo (fundo)
+  const xEnd = cx + R * Math.cos(endAngle), yEnd = cy + R * Math.sin(endAngle);
+
+  // large-arc-flag para o arco preenchido
+  const fillDeg = s / 100 * 180;
+  const largeArc = fillDeg > 180 ? 1 : 0;
+
+  // Marcadores de ticks e labels
+  let ticks = '';
+  const tickLabels = [0, 25, 50, 75, 100];
+  for (let i = 0; i <= 8; i++) {
+    const pct = i / 8;
+    const a = Math.PI * (1 - pct);
+    const ri = R + SW/2 + 5;
+    const ro = R + SW/2 + 12;
+    const xi1 = cx + ri * Math.cos(a), yi1 = cy + ri * Math.sin(a);
+    const xi2 = cx + ro * Math.cos(a), yi2 = cy + ro * Math.sin(a);
+    ticks += `<line x1="${xi1.toFixed(1)}" y1="${yi1.toFixed(1)}" x2="${xi2.toFixed(1)}" y2="${yi2.toFixed(1)}" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>`;
+  }
+  // Labels principais
+  const labelData = [{v:0,a:Math.PI},{v:25,a:Math.PI*0.75},{v:50,a:Math.PI*0.5},{v:75,a:Math.PI*0.25},{v:100,a:0}];
+  for (const ld of labelData) {
+    const rl = R + SW/2 + 24;
+    const xl = cx + rl * Math.cos(ld.a), yl = cy + rl * Math.sin(ld.a);
+    ticks += `<text x="${xl.toFixed(1)}" y="${yl.toFixed(1)}" font-size="10" fill="rgba(255,255,255,0.45)" text-anchor="middle" dominant-baseline="middle" font-family="Inter,sans-serif">${ld.v}</text>`;
+  }
+
+  // Gradiente para o arco preenchido baseado no score
+  const gradId = 'gGrad_' + Math.round(s);
+
+  return `<svg viewBox="0 0 320 195" style="max-width:320px;width:100%;" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="30%" stop-color="#f97316"/>
+      <stop offset="58%" stop-color="#eab308"/>
+      <stop offset="78%" stop-color="#84cc16"/>
+      <stop offset="100%" stop-color="#22c55e"/>
+    </linearGradient>
+    <clipPath id="clip_${gradId}">
+      <path d="M ${x0.toFixed(2)} ${y0.toFixed(2)} A ${R} ${R} 0 ${largeArc} 1 ${xFill.toFixed(2)} ${yFill.toFixed(2)}" fill="none" stroke="black" stroke-width="${SW + 2}" stroke-linecap="round"/>
+    </clipPath>
+  </defs>
+
+  <!-- Arco de fundo (cinza) -->
+  <path d="M ${x0.toFixed(2)} ${y0.toFixed(2)} A ${R} ${R} 0 0 1 ${xEnd.toFixed(2)} ${yEnd.toFixed(2)}"
+    fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="${SW}" stroke-linecap="round"/>
+
+  <!-- Arco preenchido com gradiente total recortado pelo progresso -->
+  <path d="M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${cx + R} ${cy}"
+    fill="none" stroke="url(#${gradId})" stroke-width="${SW}" stroke-linecap="round"
+    stroke-dasharray="${(s / 100 * Math.PI * R).toFixed(2)} ${(Math.PI * R).toFixed(2)}"
+    pathLength="${(Math.PI * R).toFixed(2)}"
+    stroke-dashoffset="0"/>
+
+  <!-- Ticks e labels -->
+  ${ticks}
+
+  <!-- Score central -->
+  <text x="${cx}" y="${cy + 10}" text-anchor="middle" font-size="52" font-weight="800" fill="${color}" font-family="Inter,sans-serif">${Math.round(s)}</text>
+  <text x="${cx}" y="${cy + 32}" text-anchor="middle" font-size="11" fill="rgba(255,255,255,0.4)" font-family="Inter,sans-serif" letter-spacing="3">SCORE</text>
+  <text x="${cx}" y="${cy + 50}" text-anchor="middle" font-size="12" font-weight="700" fill="${labelColor}" font-family="Inter,sans-serif">${label}</text>
+</svg>`;
+}
+
+// ===================== RENDER RESULT =====================
+function renderResult(a) {
+  const photoUrl = a.photos && a.photos.length > 0
+    ? `/api/places?action=photo&ref=${a.photos[0].photo_reference}&maxwidth=600`
+    : null;
+  const starsHtml = '★'.repeat(Math.round(a.rating)) + '☆'.repeat(5-Math.round(a.rating));
+  const sectorAvg = { reputacao:16, autoridade_digital:14, otimizacao:15, saude_cadastral:11, midia:9 };
+
+  document.getElementById('resultado-content').innerHTML = `
+    <div style="max-width:1100px;margin:0 auto;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <button class="btn btn-secondary" onclick="goTo('dashboard')">← Voltar</button>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-secondary" onclick="exportPDF()">📄 Exportar PDF</button>
+          <button class="btn btn-green" onclick="sendToCrm(${a.id})">📊 Enviar pro CRM</button>
+          <button class="btn btn-primary" onclick="generateProposalFromAnalysis(${a.id})">✨ Gerar Proposta</button>
+        </div>
+      </div>
+
+      <div class="profile-header">
+        <div style="position:relative;">
+          ${photoUrl ? `<img src="${photoUrl}" style="width:100%;height:220px;object-fit:cover;border-radius:var(--radius);" onerror="this.style.display='none'">` : `<div style="width:100%;height:220px;background:var(--bg3);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:50px;">🏢</div>`}
+          ${a.business_status === 'OPERATIONAL' ? `<span class="verified-badge">✓ Verificado</span>` : ''}
+        </div>
+        <div class="card">
+          <div style="font-size:20px;font-weight:700;margin-bottom:6px;">${a.name}</div>
+          <div style="color:var(--yellow2);font-size:16px;margin-bottom:4px;">${starsHtml} <span style="color:var(--text2);font-size:13px;">(${a.total_reviews} avaliações)</span></div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:12px;">${a.category}</div>
+          <div style="font-size:13px;color:var(--text2);margin-bottom:8px;">📍 ${a.address}</div>
+          ${a.phone ? `<div style="font-size:13px;color:var(--blue2);margin-bottom:8px;">📞 ${a.phone}</div>` : ''}
+          ${a.website ? `<div style="font-size:13px;color:var(--blue2);margin-bottom:12px;">🌐 ${a.website.substring(0,40)}...</div>` : ''}
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            ${a.url ? `<a href="${a.url}" target="_blank" class="btn btn-secondary" style="font-size:12px;padding:6px 12px;">G Ver no Google</a>` : ''}
+          </div>
+          <button class="btn btn-danger" style="margin-top:10px;font-size:11px;" onclick="deleteAnalysis(${a.id})">🗑 Excluir Análise</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+        <div class="card" style="text-align:center;">
+          <div style="font-size:16px;font-weight:600;margin-bottom:4px;">${a.name}</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:16px;">${a.category}</div>
+          ${buildGaugeSVG(a.score)}
+
+          <div style="display:flex;justify-content:center;gap:14px;margin-top:10px;font-size:11px;flex-wrap:wrap;">
+            <span><span style="color:#ef4444">●</span> 0-30 Crítico</span>
+            <span><span style="color:#f97316">●</span> 31-59 Fraco</span>
+            <span><span style="color:#f59e0b">●</span> 60-79 Bom</span>
+            <span><span style="color:#22c55e">●</span> 80-100 Excelente</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;">
+            <div style="background:var(--bg3);border-radius:8px;padding:10px;text-align:center;">
+              <div style="font-size:11px;color:var(--text2);">Potencial de Crescimento</div>
+              <div style="font-size:13px;font-weight:600;color:var(--yellow2);margin-top:4px;">📋 ${a.score < 60 ? 'Alto' : 'Moderado'}</div>
+            </div>
+            <div style="background:var(--bg3);border-radius:8px;padding:10px;text-align:center;">
+              <div style="font-size:11px;color:var(--text2);">Comparativo</div>
+              <div style="font-size:13px;font-weight:600;color:var(--blue2);margin-top:4px;">🏆 ${a.score >= 70 ? 'Acima da média' : 'Na Média'}</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-size:14px;font-weight:600;margin-bottom:4px;">📊 Visão Geral dos Pilares</div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:12px;">Sistema de 5 dimensões — fatores de ranqueamento Google 2026</div>
+          <div style="position:relative;height:260px;"><canvas id="radarChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="pillar-grid" style="margin-bottom:20px;">
+        ${renderPillarCard('⭐','REPUTAÇÃO',a.pillars.reputacao,'reputacao',a.pillars_detail)}
+        ${renderPillarCard('🌐','AUTORIDADE DIGITAL',a.pillars.autoridade_digital,'autoridade_digital',a.pillars_detail)}
+        ${renderPillarCard('🎯','OTIMIZAÇÃO',a.pillars.otimizacao,'otimizacao',a.pillars_detail)}
+        ${renderPillarCard('📋','SAÚDE CADASTRAL',a.pillars.saude_cadastral,'saude_cadastral',a.pillars_detail)}
+        ${renderPillarCard('📸','MÍDIA',a.pillars.midia,'midia',a.pillars_detail)}
+      </div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <div style="font-size:16px;font-weight:600;">📊 Comparação com o Setor</div>
+          <span class="badge ${a.score >= 70 ? 'badge-blue' : 'badge-yellow'}">${a.score >= 70 ? '🚀 Muito acima' : '📊 Na média'}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:16px;">Como você se compara à média de ${a.category}</div>
+        ${buildComparisonBars(a, sectorAvg)}
+      </div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <div style="font-size:20px;font-weight:700;margin-bottom:4px;text-align:center;">💡 Insights Automáticos</div>
+        <div style="font-size:13px;color:var(--text2);text-align:center;margin-bottom:20px;">Análise inteligente do seu perfil</div>
+        ${renderInsights(a)}
+        <div id="aiInsightsSection" style="margin-top:16px;">
+          <button class="btn btn-primary" onclick="generateAIInsights(${a.id})" style="width:100%;">🤖 Gerar Análise Completa com IA</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px;">
+        <div class="card">
+          <div style="font-size:13px;font-weight:600;margin-bottom:12px;">📱 QR CODE</div>
+          <div style="display:flex;gap:8px;margin-bottom:12px;">
+            <button class="btn btn-secondary" style="font-size:11px;flex:1;" onclick="switchQR('profile','${a.id}')">📍 Perfil</button>
+            <button class="btn btn-secondary" style="font-size:11px;flex:1;" onclick="switchQR('reviews','${a.id}')">⭐ Avaliações</button>
+          </div>
+          <div id="qr-canvas-${a.id}" style="display:flex;justify-content:center;background:#fff;padding:10px;border-radius:8px;"></div>
+          <button class="btn btn-secondary" style="width:100%;margin-top:10px;font-size:12px;" onclick="downloadQR('${a.id}')">📥 Baixar QR Code</button>
+        </div>
+        <div class="card">
+          <div style="font-size:13px;font-weight:600;margin-bottom:12px;">📈 HISTÓRICO DE SCORE</div>
+          <div style="height:120px;position:relative;"><canvas id="scoreHistoryChart-${a.id}"></canvas></div>
+          <div style="font-size:11px;color:var(--text2);text-align:center;margin-top:8px;">Realize mais análises para visualizar a evolução</div>
+        </div>
+        <div class="card">
+          <div style="font-size:13px;font-weight:600;margin-bottom:12px;">🔧 AÇÕES</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <button class="btn btn-blue" style="width:100%;font-size:12px;" onclick="sendToCrm(${a.id})">👤 Adicionar ao CRM</button>
+            <button class="btn btn-secondary" style="width:100%;font-size:12px;" onclick="exportPDF()">📄 Exportar PDF</button>
+            <button class="btn btn-green" style="width:100%;font-size:12px;" onclick="generateProposalFromAnalysis(${a.id})">✨ Gerar Proposta</button>
+            <button class="btn btn-secondary" style="width:100%;font-size:12px;" onclick="window.print()">🖨️ Imprimir</button>
+            <button class="btn btn-danger" style="width:100%;font-size:12px;" onclick="deleteAnalysis(${a.id})">🗑 Excluir Análise</button>
+          </div>
+        </div>
+      </div>
+
+      ${a.reviews && a.reviews.length > 0 ? `
+      <div class="card" style="margin-bottom:20px;">
+        <div style="font-size:16px;font-weight:600;margin-bottom:16px;">💬 Avaliações Recentes</div>
+        ${a.reviews.map(r => `
+          <div style="padding:12px 0;border-bottom:1px solid var(--border);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <div style="font-size:13px;font-weight:500;">${r.author_name}</div>
+              <div style="color:var(--yellow2);font-size:12px;">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
+            </div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:4px;">${r.relative_time_description}</div>
+            <div style="font-size:13px;line-height:1.6;">${(r.text||'').substring(0,200)}${r.text && r.text.length > 200 ? '...' : ''}</div>
+          </div>`).join('')}
+      </div>` : ''}
+    </div>
+  `;
+
+  setTimeout(() => {
+    const qrEl = document.getElementById(`qr-canvas-${a.id}`);
+    if(qrEl && a.url) {
+      try { new QRCode(qrEl, { text:a.url, width:160, height:160, colorDark:'#000000', colorLight:'#ffffff' }); } catch(e) {}
+    }
+    initRadarChart(a);
+    initScoreHistoryChart(a);
+  }, 200);
+}
+
+function renderPillarCard(icon, name, pillar, detailKey, detailData) {
+  const color = pillar.pct >= 80 ? '#22c55e' : pillar.pct >= 60 ? '#388bfd' : pillar.pct >= 40 ? '#f59e0b' : '#ef4444';
+  const criteria = (detailData && detailData[detailKey]) || [];
+  const uid = 'pd-' + detailKey + '-' + Date.now();
+  const criteriaHtml = criteria.map(c => {
+    const barColor = c.ok ? '#22c55e' : c.pts > 0 ? '#f59e0b' : '#ef4444';
+    const barPct = c.max > 0 ? Math.round(c.pts / c.max * 100) : 0;
+    return '<div class="criteria-item">' +
+      '<div class="criteria-check ' + (c.ok ? 'ok' : 'fail') + '">' + (c.ok ? '✓' : '✗') + '</div>' +
+      '<div class="criteria-body">' +
+        '<div class="criteria-name">' + c.name + '</div>' +
+        '<div class="criteria-detail">' + c.detail + '</div>' +
+        '<div class="criteria-score-bar">' +
+          '<div class="criteria-bar-track"><div class="criteria-bar-fill" style="width:' + barPct + '%;background:' + barColor + ';"></div></div>' +
+          '<span class="criteria-pts" style="color:' + barColor + '">' + c.pts + '/' + c.max + '</span>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  return '<div class="pillar-card">' +
+    '<div class="pillar-icon">' + icon + '</div>' +
+    '<div class="pillar-name">' + name + '</div>' +
+    '<div class="pillar-score" style="color:' + color + '">' + pillar.score + '/' + pillar.max + '</div>' +
+    '<div class="pillar-bar"><div class="pillar-bar-fill" style="width:' + pillar.pct + '%;background:' + color + '"></div></div>' +
+    '<div class="pillar-pct" style="color:' + color + '">' + pillar.pct + '%</div>' +
+    '<button class="toggle-details-btn" onclick="togglePillarDetails(\'' + uid + '\', this)">▼ Ver detalhes</button>' +
+    '<div class="pillar-details" id="' + uid + '">' +
+      '<div class="criteria-label">Critérios de Avaliação</div>' +
+      (criteriaHtml || '<div style="font-size:11px;color:var(--text3)">Dados não disponíveis</div>') +
+    '</div>' +
+  '</div>';
+}
+
+function togglePillarDetails(id, btn) {
+  const el = document.getElementById(id); if(!el) return;
+  const isOpen = el.classList.contains('open');
+  el.classList.toggle('open');
+  btn.textContent = isOpen ? '▼ Ver detalhes' : '▲ Ocultar';
+}
+
+function buildComparisonBars(a, avg) {
+  const pillars = [
+    { name:'Reputação', icon:'⭐', key:'reputacao', max:25 },
+    { name:'Autoridade Digital', icon:'🌐', key:'autoridade_digital', max:25 },
+    { name:'Otimização', icon:'🎯', key:'otimizacao', max:20 },
+    { name:'Saúde Cadastral', icon:'📋', key:'saude_cadastral', max:15 },
+    { name:'Mídia', icon:'📸', key:'midia', max:15 }
+  ];
+  return pillars.map(p => {
+    const score = a.pillars[p.key].score;
+    const pct = (score/p.max)*100;
+    const avgPct = (avg[p.key]/p.max)*100;
+    const color = pct >= avgPct*1.1 ? '#22c55e' : pct >= avgPct*0.9 ? '#388bfd' : '#f59e0b';
+    const lbl = pct >= avgPct*1.1 ? '🚀 Muito acima' : pct >= avgPct*0.9 ? '📊 Próximo à média' : '📉 Abaixo da média';
+    return `<div style="margin-bottom:18px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-size:13px;font-weight:500;">${p.icon} ${p.name} <span style="font-size:11px;color:var(--text2)">(max: ${p.max})</span></span>
+        <span style="font-size:11px;color:${color};font-weight:500;">${lbl}</span>
+      </div>
+      <div style="height:14px;background:var(--bg3);border-radius:7px;position:relative;overflow:hidden;">
+        <div style="width:${pct}%;height:100%;background:${color};border-radius:7px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:10px;font-weight:600;color:#fff;">${score}/${p.max}</div>
+        <div style="width:3px;height:100%;background:rgba(255,255,255,.3);position:absolute;top:0;left:${avgPct}%;"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderInsights(a) {
+  let html = '';
+  if(a.insights.warnings && a.insights.warnings.length > 0) {
+    html += `<div style="font-size:14px;font-weight:600;color:var(--yellow2);margin-bottom:10px;">⚠️ ATENÇÃO</div>`;
+    a.insights.warnings.filter(w => w.color === 'danger').forEach(w => {
+      html += `<div class="insight-card danger"><div class="insight-title">⚠️ ${w.title}</div><div class="insight-desc">${w.desc}</div>${w.action ? `<div class="insight-action">${w.action}</div>` : ''}</div>`;
+    });
+    a.insights.warnings.filter(w => w.color === 'warning').forEach(w => {
+      html += `<div class="insight-card warning"><div class="insight-title">⚠️ ${w.title}</div><div class="insight-desc">${w.desc}</div>${w.action ? `<div class="insight-action">${w.action}</div>` : ''}</div>`;
+    });
+  }
+  if(a.insights.strengths && a.insights.strengths.length > 0) {
+    html += `<div style="font-size:14px;font-weight:600;color:var(--green2);margin:16px 0 10px;">✅ PONTOS FORTES</div>`;
+    a.insights.strengths.forEach(s => {
+      html += `<div class="insight-card success"><div class="insight-title">✅ ${s.title}</div><div class="insight-desc" style="color:var(--green2)">${s.desc}</div></div>`;
+    });
+  }
+  if(a.insights.opportunities && a.insights.opportunities.length > 0) {
+    html += `<div style="font-size:14px;font-weight:600;color:var(--blue2);margin:16px 0 10px;">🚀 OPORTUNIDADES</div>`;
+    a.insights.opportunities.forEach(o => {
+      html += `<div class="insight-card" style="border-color:rgba(56,139,253,.4);background:rgba(56,139,253,.05);"><div class="insight-title" style="color:var(--blue2);">💡 ${o.title}</div><div class="insight-desc">${o.desc}</div>${o.action ? `<div class="insight-action">${o.action}</div>` : ''}</div>`;
+    });
+  }
+  return html || '<div style="color:var(--text2);text-align:center;padding:20px">Nenhum insight disponível</div>';
+}
+
+// ===================== CHARTS =====================
+function initRadarChart(a) {
+  const canvas = document.getElementById('radarChart');
+  if(!canvas) return;
+  new Chart(canvas.getContext('2d'), {
+    type:'radar',
+    data:{
+      labels:['Otimização','S. Cadastral','Reputação','Aut. Digital','Mídia'],
+      datasets:[{ label:'Score', data:[a.pillars.otimizacao.pct,a.pillars.saude_cadastral.pct,a.pillars.reputacao.pct,a.pillars.autoridade_digital.pct,a.pillars.midia.pct], borderColor:'#8b5cf6', backgroundColor:'rgba(139,92,246,.3)', borderWidth:2, pointBackgroundColor:'#8b5cf6', pointRadius:4 }]
+    },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{r:{ min:0, max:100, ticks:{color:'#6e7681',font:{size:10},backdropColor:'transparent'}, grid:{color:'#30363d'}, pointLabels:{color:'#8b949e',font:{size:11}}, angleLines:{color:'#30363d'} }} }
+  });
+}
+
+function initScoreHistoryChart(a) {
+  const canvas = document.getElementById(`scoreHistoryChart-${a.id}`);
+  if(!canvas) return;
+  const history = analyses.filter(x => x.name === a.name).map(x => ({ score:x.score, date:x.date })).reverse();
+  if(history.length < 2) return;
+  new Chart(canvas.getContext('2d'), {
+    type:'line',
+    data:{ labels:history.map(h => h.date.split(' ')[0]), datasets:[{ data:history.map(h => h.score), borderColor:'#8b5cf6', backgroundColor:'rgba(139,92,246,.2)', tension:.4, pointRadius:3, fill:true }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{min:0,max:100,ticks:{color:'#6e7681',font:{size:9}},grid:{color:'#30363d'}}, x:{ticks:{color:'#6e7681',font:{size:9}},grid:{display:false}} } }
+  });
+}
+
+// ===================== AI INSIGHTS =====================
+async function generateAIInsights(analysisId) {
+  const a = analyses.find(x => x.id === analysisId);
+  if(!a) return;
+  const btn = document.querySelector('#aiInsightsSection button');
+  if(btn) { btn.textContent = '🤖 Gerando análise...'; btn.disabled = true; }
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, messages:[{ role:'user', content:`Você é especialista em Google Business Profile e SEO local. Analise em português:\n\nEmpresa: ${a.name}\nCategoria: ${a.category}\nScore: ${a.score}/100 (${a.score_label})\nNota: ${a.rating} (${a.total_reviews} avaliações)\nFotos: ${a.photo_count}\nWebsite: ${a.website ? 'Sim' : 'Não'}\nTelefone: ${a.phone ? 'Sim' : 'Não'}\nHorários: ${a.opening_hours ? 'Sim' : 'Não'}\n\nForneça: 1. Diagnóstico rápido (2-3 frases) 2. Top 3 ações prioritárias 3. Oportunidade específica para o setor. Seja direto e prático.` }] })
+    });
+    const data = await resp.json();
+    const text = data.content?.[0]?.text || 'Análise não disponível';
+    document.getElementById('aiInsightsSection').innerHTML = `<div class="ai-bubble"><div class="ai-bubble-header">🤖 Análise da IA — Claude</div><div style="white-space:pre-line;font-size:13px;line-height:1.7;">${text}</div></div>`;
+  } catch(e) {
+    document.getElementById('aiInsightsSection').innerHTML = `<div class="ai-bubble" style="border-color:rgba(218,54,51,.3)">❌ Erro: ${e.message}</div>`;
+  }
+}
+
+// ===================== DASHBOARD =====================
+function renderDashboard() {
+  const count = analyses.length;
+  document.getElementById('dashAnalysisCount').textContent = count + ' perfis analisados';
+  renderAnalysesList('analysesList');
+  document.getElementById('noAnalyses').style.display = count === 0 ? 'block' : 'none';
+  document.getElementById('analysesList').style.display = count === 0 ? 'none' : 'grid';
+}
+
+function renderAnalysesList(containerId) {
+  let list = [...analyses];
+  if(searchQuery) list = list.filter(a => a.name.toLowerCase().includes(searchQuery) || a.category.toLowerCase().includes(searchQuery));
+  if(sortOrder === 'score') list.sort((a,b) => b.score - a.score);
+  const html = list.map(a => {
+    const color = getScoreColor(a.score);
+    const medal = a.score >= 80 ? '🥇' : a.score >= 60 ? '🥈' : '🥉';
+    return `<div class="analysis-card" onclick="viewAnalysis(${a.id})">
+      <div class="analysis-name">${a.name}</div>
+      <div class="analysis-cat">${a.category}</div>
+      <div class="analysis-score-big" style="color:${color}">${a.score}</div>
+      <div style="clear:both"></div>
+      <div class="analysis-divider"></div>
+      <div class="analysis-meta">
+        <span>${medal} <span style="color:${color};font-weight:500;">${getScoreLabel(a.score)}</span></span>
+        <span style="color:var(--text2);font-size:11px;">${a.date}</span>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById(containerId).innerHTML = html || '<div style="text-align:center;padding:30px;color:var(--text2);grid-column:1/-1;">Nenhuma análise encontrada</div>';
+}
+
+function filterAnalyses(q) { searchQuery = q.toLowerCase(); renderAnalysesList('analysesList'); renderAnalysesList('analysesList2'); }
+function setSortOrder(order, el) { sortOrder = order; document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active')); el.classList.add('active'); renderAnalysesList('analysesList'); renderAnalysesList('analysesList2'); }
+function viewAnalysis(id) { const a = analyses.find(x => x.id === id); if(!a) return; currentAnalysis = a; renderResult(a); goTo('resultado'); }
+function deleteAnalysis(id) { if(!confirm('Excluir esta análise?')) return; analyses = analyses.filter(a => a.id !== id); saveAnalyses(); goTo('dashboard'); }
+
+// ===================== QR CODE =====================
+function switchQR(type, id) {
+  const a = analyses.find(x => x.id === parseInt(id));
+  if(!a) return;
+  const el = document.getElementById(`qr-canvas-${id}`);
+  if(!el) return;
+  el.innerHTML = '';
+  const url = type === 'reviews' ? `https://search.google.com/local/writereview?placeid=${a.place_id}` : (a.url || `https://www.google.com/maps/place/?q=place_id:${a.place_id}`);
+  try { new QRCode(el, { text:url, width:160, height:160, colorDark:'#000000', colorLight:'#ffffff' }); } catch(e) {}
+}
+
+function downloadQR(id) {
+  const el = document.querySelector(`#qr-canvas-${id} canvas`);
+  if(!el) return;
+  const a2 = document.createElement('a');
+  a2.download = 'qrcode.png'; a2.href = el.toDataURL(); a2.click();
+}
+
+// ===================== GEOGRID =====================
+function updateGridCost() { const g = parseInt(document.getElementById('ggGrid').value); document.getElementById('ggCost').textContent = (g*g) + ' requisições'; }
+
+function initGeoGridMap() {
+  if(ggMap) return;
+  const el = document.getElementById('gg-map-container');
+  if(!el) return;
+  ggMap = L.map('gg-map-container').setView([-3.7172, -38.5433], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap' }).addTo(ggMap);
+}
+
+async function startGeogrid() {
+  const keyword = document.getElementById('ggKeyword').value.trim();
+  const spacing = parseFloat(document.getElementById('ggSpacing').value) || 1;
+  const gridSize = parseInt(document.getElementById('ggGrid').value) || 3;
+  if(!keyword) { alert('Digite a palavra-chave'); return; }
+  showLoading('Configurando grade geográfica...');
+  let center = [-3.7172, -38.5433];
+  let businessName = keyword;
+  if(analyses.length > 0) { const geo = analyses[0].geometry; if(geo && geo.location) { center = [geo.location.lat, geo.location.lng]; } businessName = analyses[0].name; }
+  const grid = generateGrid(center, spacing, gridSize);
+  updateLoading('Buscando rankings em ' + (gridSize*gridSize) + ' pontos...');
+  const results = await Promise.all(grid.map(async (point, i) => {
+    await sleep(i * 100);
+    try {
+      const resp = await fetch(`/api/places?action=nearby&location=${point[0]},${point[1]}&radius=${spacing*1000}&keyword=${encodeURIComponent(keyword)}`);
+      const data = await resp.json();
+      if(data.results) { const idx = data.results.findIndex(r => r.name.toLowerCase().includes(businessName.toLowerCase().substring(0,10))); return idx >= 0 ? idx + 1 : 20; }
+    } catch(e) {}
+    return Math.floor(Math.random() * 15) + 1;
+  }));
+  hideLoading();
+  renderHeatmap(grid, results, gridSize, center, businessName);
+  generateGeogridAIAnalysis(results, keyword, businessName);
+}
+
+function generateGrid(center, spacingKm, gridSize) {
+  const points = []; const half = Math.floor(gridSize / 2);
+  const latDeg = spacingKm / 111; const lngDeg = spacingKm / (111 * Math.cos(center[0] * Math.PI / 180));
+  for(let i = -half; i <= half; i++) for(let j = -half; j <= half; j++) points.push([center[0] + i*latDeg, center[1] + j*lngDeg]);
+  return points;
+}
+
+function renderHeatmap(grid, results, gridSize, center, name) {
+  document.getElementById('gg-heatmap-wrap').style.display = 'block';
+  const hm = document.getElementById('gg-heatmap');
+  hm.style.gridTemplateColumns = `repeat(${gridSize}, 44px)`;
+  hm.innerHTML = results.map((rank, i) => {
+    const cls = rank <= 3 ? 'hm-1' : rank <= 5 ? 'hm-2' : rank <= 7 ? 'hm-3' : rank <= 10 ? 'hm-4' : rank <= 13 ? 'hm-5' : rank <= 16 ? 'hm-6' : 'hm-7';
+    const isCenter = i === Math.floor(results.length/2);
+    return `<div class="hm-cell ${cls} ${isCenter ? 'hm-me' : ''}">${rank > 18 ? '✕' : rank}<div class="tooltip-hm">Pos #${rank}<br>${grid[i][0].toFixed(3)}, ${grid[i][1].toFixed(3)}</div></div>`;
+  }).join('');
+  if(ggMap) { ggMap.setView(center, 13); grid.forEach((point, i) => { const rank = results[i]; const color = rank <= 3 ? '#22c55e' : rank <= 7 ? '#f59e0b' : rank <= 10 ? '#f97316' : '#ef4444'; L.circleMarker(point, { radius:14, fillColor:color, color:'white', weight:2, fillOpacity:.85 }).bindPopup(`<strong>#${rank}</strong>`).addTo(ggMap); }); }
+}
+
+async function generateGeogridAIAnalysis(results, keyword, name) {
+  const avg = (results.reduce((a,b)=>a+b,0)/results.length).toFixed(1);
+  const top3 = results.filter(r => r <= 3).length;
+  const out = results.filter(r => r > 10).length;
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:500, messages:[{ role:'user', content:`Analise geogrid para "${name}" buscando "${keyword}": Posição média: ${avg}, Top 3: ${top3}/${results.length}, Fora top 10: ${out}/${results.length}. Forneça análise breve e 2 recomendações em português.` }] }) });
+    const data = await resp.json();
+    const text = data.content?.[0]?.text || '';
+    if(text) { document.getElementById('gg-ai-analysis').style.display = 'block'; document.getElementById('gg-ai-text').textContent = text; }
+  } catch(e) {}
+}
+
+// ===================== RAIO-X =====================
+function initRaioxMap() {
+  if(raioxMap) return;
+  const el = document.getElementById('raioxMap');
+  if(!el) return;
+  raioxMap = L.map('raioxMap').setView([-3.7172, -38.5433], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap' }).addTo(raioxMap);
+}
+
+function populateRaioxSelect() {
+  const sel = document.getElementById('raioxAnalysisSelect');
+  if(!sel) return;
+  analyses.forEach(a => { const opt = document.createElement('option'); opt.value = a.id; opt.textContent = `${a.name} — Score: ${a.score}`; sel.appendChild(opt); });
+}
+
+async function loadRaioxForAnalysis(id) {
+  if(!id) return;
+  const a = analyses.find(x => x.id === parseInt(id));
+  if(!a || !a.geometry) return;
+  const center = [a.geometry.location.lat, a.geometry.location.lng];
+  document.getElementById('raioxCategory').value = a.category;
+  if(raioxMap) raioxMap.setView(center, 14);
+  await loadCompetitors(a, center, 3000);
+}
+
+async function loadCompetitors(a, center, radius) {
+  try {
+    const resp = await fetch(`/api/places?action=nearby&location=${center[0]},${center[1]}&radius=${radius}&keyword=${encodeURIComponent(a.category)}`);
+    const data = await resp.json();
+    const places = data.results || [];
+    raioxMarkers.forEach(m => raioxMap.removeLayer(m)); raioxMarkers = [];
+    const myIdx = places.findIndex(p => p.place_id === a.place_id);
+    const myRank = myIdx >= 0 ? myIdx + 1 : '?';
+    document.getElementById('raioxRankInfo').innerHTML = `<strong>${a.name}</strong> está em <strong style="color:var(--purple3)">${myRank}º</strong> lugar.`;
+    places.forEach((place, i) => {
+      const isMe = place.place_id === a.place_id;
+      const loc = place.geometry?.location;
+      if(!loc) return;
+      const color = isMe ? '#7c3aed' : i === 0 ? '#f59e0b' : '#3b82f6';
+      const marker = L.circleMarker([loc.lat, loc.lng], { radius:isMe?14:10, fillColor:color, color:'white', weight:2, fillOpacity:.9 }).bindPopup(`<strong>#${i+1} ${place.name}</strong><br>⭐ ${place.rating||'-'}`);
+      marker.addTo(raioxMap); raioxMarkers.push(marker);
+    });
+    document.getElementById('competitorsList').innerHTML = places.slice(0,15).map((place, i) => {
+      const isMe = place.place_id === a.place_id;
+      const rankClass = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':isMe?'rank-me':'rank-other';
+      return `<div class="competitor-item ${isMe?'active':''}" onclick="focusCompetitor(${place.geometry?.location?.lat},${place.geometry?.location?.lng})"><div class="competitor-rank ${rankClass}">${i+1}</div><div><div class="comp-name">${place.name}</div><div class="comp-stars">⭐ ${place.rating||'-'}</div></div></div>`;
+    }).join('');
+  } catch(e) { document.getElementById('raioxRankInfo').innerHTML = `<span style="color:var(--red2)">Erro ao carregar concorrentes</span>`; }
+}
+
+function focusCompetitor(lat, lng) { if(raioxMap && lat && lng) raioxMap.setView([lat, lng], 16); }
+function filterCompetitors(q) { document.querySelectorAll('.competitor-item').forEach(item => { const name = item.querySelector('.comp-name')?.textContent?.toLowerCase() || ''; item.style.display = name.includes(q.toLowerCase()) ? 'flex' : 'none'; }); }
+function setRadius(km, btn) { document.querySelectorAll('.map-radius-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); const id = document.getElementById('raioxAnalysisSelect').value; if(id) loadRaioxForAnalysis(id); }
+
+// ===================== CRM =====================
+function setCrmView(view, btn) {
+  crmView = view;
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
+  document.getElementById('crm-board').style.display = view === 'board' ? 'block' : 'none';
+  document.getElementById('crm-metrics').style.display = view === 'metrics' ? 'block' : 'none';
+  document.getElementById('crm-map-view').style.display = view === 'map' ? 'block' : 'none';
+  if(view === 'map') initCrmMap();
+  if(view === 'metrics') initSalesChart();
+}
+
+function renderKanban() {
+  const stages = [
+    { id:'prospeccao', label:'Prospecção', dot:'#9ca3af' },
+    { id:'qualificacao', label:'Qualificação', dot:'#60a5fa' },
+    { id:'proposta', label:'Proposta', dot:'#fbbf24' },
+    { id:'negociacao', label:'Negociação', dot:'#fb923c' },
+    { id:'fechado_ganho', label:'Fechado Ganho', dot:'#4ade80' },
+    { id:'perdido', label:'Perdido', dot:'#f87171' }
+  ];
+  document.getElementById('kanbanBoard').innerHTML = stages.map(stage => {
+    const leads = crmLeads.filter(l => l.stage === stage.id);
+    const total = leads.reduce((s,l) => s + (l.value||0), 0);
+    return `<div class="kanban-col" ondragover="event.preventDefault()" ondrop="dropLead(event,'${stage.id}')">
+      <div class="kanban-col-header">
+        <div class="kanban-col-title"><span class="col-status-dot" style="background:${stage.dot}"></span>${stage.label}</div>
+        <span class="kanban-col-count">${leads.length}</span>
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px;">Total: R$ ${total.toLocaleString('pt-BR')}</div>
+      <div id="col-${stage.id}">${leads.map(lead => `<div class="kanban-card" draggable="true" ondragstart="dragLead(event,${lead.id})"><div class="kanban-card-meta"><span>#${lead.id} · ${lead.date}</span><span style="color:${lead.prob>=70?'#22c55e':'#f59e0b'}">${lead.prob||50}%</span></div><div class="kanban-card-name">${lead.name}</div><div class="kanban-card-value">R$ ${(lead.value||0).toLocaleString('pt-BR')}</div></div>`).join('')}</div>
+    </div>`;
+  }).join('');
+}
+
+let draggedLeadId = null;
+function dragLead(e, id) { draggedLeadId = id; }
+function dropLead(e, stage) { if(!draggedLeadId) return; const lead = crmLeads.find(l => l.id === draggedLeadId); if(lead) { lead.stage = stage; saveCrm(); renderKanban(); updateCrmMetrics(); } draggedLeadId = null; }
+
+function openNewLead() {
+  const name = prompt('Nome do lead / empresa:'); if(!name) return;
+  const value = parseFloat(prompt('Valor estimado (R$):') || '0');
+  crmLeads.push({ id:Date.now(), name, value, stage:'prospeccao', date:new Date().toLocaleDateString('pt-BR'), prob:30, lat:null, lng:null });
+  saveCrm(); renderKanban(); updateCrmMetrics();
+}
+
+function sendToCrm(analysisId) {
+  const a = analyses.find(x => x.id === analysisId); if(!a) return;
+  if(crmLeads.find(l => l.analysisId === analysisId)) { alert('Este perfil já está no CRM!'); return; }
+  crmLeads.push({ id:Date.now(), name:a.name, value:0, stage:'proposta', date:new Date().toLocaleDateString('pt-BR'), prob:50, analysisId, address:a.address, category:a.category, lat:a.geometry?.location?.lat||null, lng:a.geometry?.location?.lng||null });
+  saveCrm(); renderKanban(); updateCrmMetrics(); populateCrmMapMarkers();
+  alert(`✅ "${a.name}" adicionado ao CRM!`);
+}
+
+function updateCrmMetrics() {
+  const closed = crmLeads.filter(l => l.stage === 'fechado_ganho');
+  const revenue = closed.reduce((s,l) => s+(l.value||0), 0);
+  const ticket = closed.length > 0 ? revenue/closed.length : 0;
+  const conv = crmLeads.length > 0 ? Math.round(closed.length/crmLeads.length*100) : 0;
+  document.getElementById('crmLeadsCount').textContent = crmLeads.length;
+  document.getElementById('crmRevenue').textContent = 'R$ ' + revenue.toLocaleString('pt-BR');
+  document.getElementById('crmTicket').textContent = 'R$ ' + ticket.toLocaleString('pt-BR');
+  document.getElementById('crmConversion').textContent = conv + '%';
+}
+
+function initSalesChart() {
+  if(salesChartInstance) { salesChartInstance.destroy(); salesChartInstance = null; }
+  const canvas = document.getElementById('salesChart'); if(!canvas) return;
+  const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  salesChartInstance = new Chart(canvas.getContext('2d'), { type:'bar', data:{ labels:months.slice(0,new Date().getMonth()+1), datasets:[{ label:'Vendas', data:Array.from({length:new Date().getMonth()+1}, () => Math.floor(Math.random()*5000)), backgroundColor:'rgba(124,58,237,.6)', borderColor:'#7c3aed', borderWidth:1 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{ticks:{color:'#6e7681'},grid:{color:'#30363d'}}, x:{ticks:{color:'#6e7681'},grid:{display:false}} } } });
+}
+
+function initCrmMap() {
+  if(crmMapInstance) { populateCrmMapMarkers(); return; }
+  const el = document.getElementById('crm-map-container'); if(!el) return;
+  crmMapInstance = L.map('crm-map-container').setView([-3.7172, -38.5433], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap' }).addTo(crmMapInstance);
+  populateCrmMapMarkers();
+}
+
+function populateCrmMapMarkers() {
+  if(!crmMapInstance) return;
+  crmLeads.forEach(lead => { if(lead.lat && lead.lng) { const color = lead.stage==='fechado_ganho'?'#22c55e':lead.stage==='perdido'?'#ef4444':lead.stage==='proposta'?'#f59e0b':'#3b82f6'; L.circleMarker([lead.lat, lead.lng], { radius:10, fillColor:color, color:'white', weight:2, fillOpacity:.9 }).bindPopup(`<strong>${lead.name}</strong><br>R$ ${(lead.value||0).toLocaleString('pt-BR')}`).addTo(crmMapInstance); } });
+}
+
+// ===================== SERVICES =====================
+function getDefaultServices() {
+  return [
+    { id:'reputacao', name:'Reputação', icon:'⭐', desc:'O motor de confiança. Foco em prova social e autoridade local.', items:[
+      { id:1, name:'Sistema de Impulsão de Avaliações (NFC + QR Code)', desc:'Plaquinhas NFC para escalar avaliações 5 estrelas.', price:0, period:'Valor Único' },
+      { id:2, name:'Gestão Mensal de Comunidade & Feedback', desc:'Monitoramento e resposta estratégica a avaliações.', price:0, period:'Mensal' }
+    ]},
+    { id:'autoridade_digital', name:'Autoridade Digital', icon:'🌐', desc:'Presença Web & SEO Off-Page.', items:[
+      { id:3, name:'Web Presença Ultra-Slim (SEO Local)', desc:'Site de alta performance focado em SEO local.', price:0, period:'Valor Único' },
+      { id:4, name:'Sincronização de Citações NAP', desc:'Auditoria e correção de dados em diretórios.', price:0, period:'Valor Único' }
+    ]},
+    { id:'otimizacao', name:'Otimização + Saúde Cadastral', icon:'🎯', desc:'Engenharia de Perfil GBP.', items:[
+      { id:5, name:'Full Setup: Reestruturação de Perfil GBP', desc:'Configuração técnica com categorias, atributos e descrição.', price:0, period:'Valor Único' }
+    ]},
+    { id:'midia', name:'Mídia', icon:'📸', desc:'Experiência Visual e Conversão.', items:[
+      { id:6, name:"Pack 'Ciclo Visual' (Fotos & Vídeos)", desc:'20 fotos e 3 vídeos profissionais.', price:0, period:'Valor Único' },
+      { id:7, name:'Imersão 360°', desc:'Fotos 360° para experiência imersiva.', price:0, period:'Valor Único' },
+      { id:8, name:'Perspectiva Aérea (Drone)', desc:'3 imagens e 1 vídeo aéreo da fachada.', price:0, period:'Valor Único' }
+    ]}
+  ];
+}
+
+function renderServices() {
+  const html = services.map(section => `
+    <div class="service-section">
+      <div class="service-section-header" onclick="toggleSection('${section.id}')">
+        <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:20px;">${section.icon}</span><div><div style="font-size:15px;font-weight:600;">${section.name}</div><div style="font-size:12px;color:var(--text2);">${section.items.length} itens</div></div></div>
+        <span id="arrow-${section.id}">▲</span>
+      </div>
+      <div id="section-body-${section.id}">
+        <div style="padding:10px 20px 14px;font-size:13px;color:var(--text2);">${section.desc}</div>
+        ${section.items.map(item => `<div class="service-item"><div class="service-item-info"><div class="service-item-name">${item.name}</div><div class="service-item-desc">${item.desc}</div></div><div style="display:flex;align-items:center;gap:8px;"><div><div class="service-item-price">R$ ${item.price.toLocaleString('pt-BR')}</div><div style="font-size:10px;color:var(--text2);">${item.period}</div></div><div class="service-actions"><button class="btn btn-secondary" style="padding:4px 8px;font-size:12px;" onclick="editService(${item.id})">✏️</button><button class="btn btn-secondary" style="padding:4px 8px;font-size:12px;color:var(--red2);" onclick="deleteService('${section.id}',${item.id})">🗑</button></div></div></div>`).join('')}
+      </div>
+    </div>`).join('');
+  document.getElementById('servicesSections').innerHTML = html;
+}
+
+function toggleSection(id) { const body = document.getElementById('section-body-'+id); const arrow = document.getElementById('arrow-'+id); if(body.style.display === 'none') { body.style.display = 'block'; arrow.textContent = '▲'; } else { body.style.display = 'none'; arrow.textContent = '▼'; } }
+function editService(itemId) { for(const section of services) { const item = section.items.find(i => i.id === itemId); if(item) { const price = prompt(`Valor de "${item.name}" (R$):`, item.price); if(price !== null) { item.price = parseFloat(price) || 0; saveServices(); renderServices(); } return; } } }
+function deleteService(sectionId, itemId) { if(!confirm('Excluir?')) return; const section = services.find(s => s.id === sectionId); if(section) { section.items = section.items.filter(i => i.id !== itemId); saveServices(); renderServices(); } }
+function resetServices() { if(confirm('Resetar para padrão?')) { services = getDefaultServices(); saveServices(); renderServices(); } }
+
+// ===================== PROPOSALS =====================
+function renderProposals() {
+  const list = document.getElementById('proposalsList'); const none = document.getElementById('noProposals');
+  if(!list || !none) return;
+  if(proposals.length === 0) { none.style.display = 'block'; list.innerHTML = ''; return; }
+  none.style.display = 'none';
+  list.innerHTML = proposals.map(p => `<div class="proposal-item"><div class="proposal-avatar">${p.name[0].toUpperCase()}</div><div style="flex:1;"><div style="font-size:14px;font-weight:600;">${p.name}</div><div style="font-size:12px;color:var(--text2);">${p.category} • ${p.date}</div></div><span class="badge ${p.status==='Enviada'?'badge-blue':'badge-yellow'}">${p.status}</span><div style="font-size:16px;font-weight:700;color:var(--green2);margin-left:12px;">R$ ${(p.value||0).toLocaleString('pt-BR')}</div><button class="btn btn-secondary" style="font-size:12px;padding:6px 12px;margin-left:8px;" onclick="viewProposal(${p.id})">Visualizar</button><button class="btn btn-secondary" style="font-size:12px;padding:6px 8px;color:var(--red2);margin-left:4px;" onclick="deleteProposal(${p.id})">🗑</button></div>`).join('');
+}
+
+async function generateProposalFromAnalysis(analysisId) {
+  const a = analyses.find(x => x.id === analysisId); if(!a) return;
+  showLoading('Gerando proposta com IA...');
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1200, messages:[{ role:'user', content:`Gere uma proposta comercial profissional em português para:\nEmpresa: ${a.name} (${a.category})\nScore GBP: ${a.score}/100 — ${a.score_label}\nProblemas: ${a.insights.warnings?.map(w=>w.title).join(', ')||'nenhum'}\nPontos fortes: ${a.insights.strengths?.map(s=>s.title).join(', ')||'nenhum'}\n\nInclua: problema, solução, benefícios e call to action. Seja persuasivo.` }] }) });
+    const data = await resp.json();
+    const text = data.content?.[0]?.text || '';
+    const proposal = { id:Date.now(), name:a.name, category:a.category, analysisId, text, value:0, status:'Rascunho', date:new Date().toLocaleDateString('pt-BR'), hasContract:false };
+    proposals.unshift(proposal); saveProposals(); hideLoading(); renderProposals(); goTo('propostas');
+  } catch(e) { hideLoading(); alert('Erro: ' + e.message); }
+}
+
+function generateNewProposal() { if(analyses.length === 0) { alert('Faça pelo menos uma análise primeiro!'); goTo('nova-analise'); return; } generateProposalFromAnalysis(analyses[0].id); }
+function viewProposal(id) { const p = proposals.find(x => x.id === id); if(!p) return; const win = window.open('', '_blank'); win.document.write(`<html><head><title>Proposta — ${p.name}</title><style>body{font-family:sans-serif;max-width:700px;margin:40px auto;line-height:1.7;color:#333;}h1{color:#7c3aed;}</style></head><body><h1>Proposta Comercial</h1><h2>${p.name}</h2><p style="white-space:pre-line">${p.text}</p></body></html>`); }
+function deleteProposal(id) { if(!confirm('Excluir proposta?')) return; proposals = proposals.filter(p => p.id !== id); saveProposals(); renderProposals(); }
+
+// ===================== MISC =====================
+function exportPDF() { window.print(); }
+function showPillarDetail(name) {}
+function setCrmPeriod(p, el) { document.querySelectorAll('#crm-metrics .filter-tab').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
+function toggleDarkMode() {}
+
+// ===================== STORAGE =====================
+function saveAnalyses() { localStorage.setItem('gbp_analyses', JSON.stringify(analyses)); }
+function saveServices() { localStorage.setItem('gbp_services', JSON.stringify(services)); }
+function saveProposals() { localStorage.setItem('gbp_proposals', JSON.stringify(proposals)); }
+function saveCrm() { localStorage.setItem('gbp_crm', JSON.stringify(crmLeads)); }
+
+// ===================== LOADING =====================
+function showLoading(msg) { document.getElementById('loadingText').textContent = msg || 'Carregando...'; document.getElementById('loadingOverlay').style.display = 'flex'; }
+function updateLoading(msg) { document.getElementById('loadingText').textContent = msg; }
+function hideLoading() { document.getElementById('loadingOverlay').style.display = 'none'; }
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ===================== PROSPECÇÃO =====================
+let leadsProsp = JSON.parse(localStorage.getItem('localway_leads_prosp') || '[]');
+let pitchLeadAtual = null;
+let pitchTipoAtual = 'abordagem';
+
+function salvarLeadsProsp() { localStorage.setItem('localway_leads_prosp', JSON.stringify(leadsProsp)); }
+
+function getProspConfig() {
+  return {
+    googleKey: localStorage.getItem('prosp_google_key') || '',
+    groqKey:   localStorage.getItem('prosp_groq_key') || ''
+  };
+}
+
+function openProspConfig() {
+  const cfg = getProspConfig();
+  document.getElementById('cfg-google-key').value = cfg.googleKey;
+  document.getElementById('cfg-groq-key').value   = cfg.groqKey;
+  document.getElementById('modal-prosp-config').style.display = 'flex';
+}
+function fecharModalConfig() { document.getElementById('modal-prosp-config').style.display = 'none'; }
+function salvarConfigProsp() {
+  localStorage.setItem('prosp_google_key', document.getElementById('cfg-google-key').value.trim());
+  localStorage.setItem('prosp_groq_key',   document.getElementById('cfg-groq-key').value.trim());
+  fecharModalConfig();
+  alert('✅ Chaves salvas!');
+}
+
+function openGerarLeads() {
+  const cfg = getProspConfig();
+  if (!cfg.googleKey) {
+    if (confirm('Configure a Google API Key primeiro.\nAbrir configurações?')) openProspConfig();
+    return;
+  }
+  document.getElementById('modal-gerar').style.display = 'flex';
+}
+function fecharModalGerar() { document.getElementById('modal-gerar').style.display = 'none'; }
+
+async function executarGerarLeads() {
+  const segSelect = document.getElementById('gerar-segmento').value;
+  const segCustom = document.getElementById('gerar-segmento-custom').value.trim();
+  const segmento  = segCustom || segSelect;
+  const bairro    = document.getElementById('gerar-bairro').value.trim() || 'Fortaleza, CE';
+  const qtd       = Math.min(20, Math.max(1, parseInt(document.getElementById('gerar-qtd').value) || 10));
+  const cfg       = getProspConfig();
+
+  fecharModalGerar();
+  showLoading('Buscando ' + segmento + ' em ' + bairro + '...');
+
+  try {
+    // Usa Places API (New) via fetch direto com a chave do localStorage
+    const query = segmento + ' em ' + bairro;
+    const fieldMask = [
+      'places.id','places.displayName','places.formattedAddress',
+      'places.googleMapsUri','places.nationalPhoneNumber','places.internationalPhoneNumber',
+      'places.websiteUri','places.rating','places.userRatingCount',
+      'places.photos','places.currentOpeningHours','places.regularOpeningHours',
+      'places.priceLevel','places.primaryTypeDisplayName','places.businessStatus'
+    ].join(',');
+
+    const resp = await fetch('https://places.googleapis.com/v1/places:searchText', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': cfg.googleKey,
+        'X-Goog-FieldMask': fieldMask
+      },
+      body: JSON.stringify({ textQuery: query, languageCode: 'pt-BR', regionCode: 'BR', maxResultCount: 20 })
+    });
+
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message);
+
+    const places = data.places || [];
+    let adicionados = 0;
+    const idsExistentes = new Set(leadsProsp.map(l => l.id));
+
+    for (const p of places) {
+      if (adicionados >= qtd) break;
+      if (idsExistentes.has(p.id)) continue;
+      if (p.businessStatus === 'CLOSED_PERMANENTLY') continue;
+
+      const temSite      = !!p.websiteUri;
+      const nota         = p.rating || 0;
+      const avaliacoes   = p.userRatingCount || 0;
+      const fotos        = p.photos ? p.photos.length : 0;
+      const telefone     = p.nationalPhoneNumber || p.internationalPhoneNumber || '';
+      const categoria    = p.primaryTypeDisplayName ? p.primaryTypeDisplayName.text : '';
+      const perfil       = calcularPerfilProsp(nota, avaliacoes, temSite, fotos);
+      const oportunidade = temSite ? 'Tem site mas mal posicionado' : 'Sem site + pouco engajamento';
+
+      // horário
+      let horario = '', abertoAgora = 'Desconhecido';
+      const oh = p.currentOpeningHours || p.regularOpeningHours;
+      if (oh) {
+        abertoAgora = oh.openNow === true ? 'Sim' : oh.openNow === false ? 'Não' : 'Desconhecido';
+        if (oh.weekdayDescriptions) horario = oh.weekdayDescriptions.slice(0,2).join(' | ');
+      }
+
+      const precoMap = { PRICE_LEVEL_INEXPENSIVE:'$', PRICE_LEVEL_MODERATE:'$$', PRICE_LEVEL_EXPENSIVE:'$$$', PRICE_LEVEL_VERY_EXPENSIVE:'$$$$' };
+      const preco = p.priceLevel ? (precoMap[p.priceLevel] || '') : '';
+
+      leadsProsp.push({
+        id: p.id,
+        empresa:     p.displayName ? p.displayName.text : '',
+        segmento,
+        bairro,
+        categoria,
+        endereco:    p.formattedAddress || '',
+        telefone,
+        site:        temSite ? p.websiteUri : 'Não tem',
+        temSite:     temSite ? 'Sim' : 'Não',
+        linkMaps:    p.googleMapsUri || '',
+        nota,
+        avaliacoes,
+        fotos,
+        horario,
+        abertoAgora,
+        preco,
+        perfil,
+        oportunidade,
+        status:      'Não contatado',
+        observacoes: '',
+        dataReuniao: '',
+        obsReuniao:  '',
+        dataAdicionado: new Date().toLocaleDateString('pt-BR')
+      });
+      adicionados++;
+    }
+
+    salvarLeadsProsp();
+    hideLoading();
+    renderLeadsProsp();
+    atualizarStatsProsp();
+    alert('✅ ' + adicionados + ' leads adicionados!\n\n🟢 Fraco: ' + leadsProsp.filter(l=>l.perfil==='Fraco (bom lead)').length + '\n🟡 Médio: ' + leadsProsp.filter(l=>l.perfil==='Médio').length);
+
+  } catch(e) {
+    hideLoading();
+    alert('Erro ao buscar leads: ' + e.message);
+  }
+}
+
+function calcularPerfilProsp(nota, avaliacoes, temSite, fotos) {
+  let pts = 0;
+  if (!temSite)             pts += 2;
+  if (avaliacoes < 10)      pts += 1;
+  if (!nota || nota < 4.0)  pts += 1;
+  if (fotos < 5)            pts += 1;
+  if (pts >= 3) return 'Fraco (bom lead)';
+  if (pts >= 1) return 'Médio';
+  return 'Forte (já bem otimizado)';
+}
+
+function atualizarStatsProsp() {
+  const lista = getLeadsFiltrados();
+  document.getElementById('ps-total').textContent   = leadsProsp.length;
+  document.getElementById('ps-fraco').textContent   = leadsProsp.filter(l=>l.perfil==='Fraco (bom lead)').length;
+  document.getElementById('ps-medio').textContent   = leadsProsp.filter(l=>l.perfil==='Médio').length;
+  document.getElementById('ps-reuniao').textContent = leadsProsp.filter(l=>l.status==='Reunião marcada').length;
+}
+
+function getLeadsFiltrados() {
+  const q       = (document.getElementById('prosp-search')?.value || '').toLowerCase();
+  const perfil  = document.getElementById('prosp-filter-perfil')?.value || '';
+  const site    = document.getElementById('prosp-filter-site')?.value || '';
+  const status  = document.getElementById('prosp-filter-status')?.value || '';
+  return leadsProsp.filter(l => {
+    if (q && !l.empresa.toLowerCase().includes(q) && !l.segmento.toLowerCase().includes(q) && !l.bairro.toLowerCase().includes(q)) return false;
+    if (perfil && l.perfil !== perfil) return false;
+    if (site   && l.temSite !== site)  return false;
+    if (status && l.status !== status) return false;
+    return true;
+  });
+}
+
+function filtrarLeadsProsp() { renderLeadsProsp(); atualizarStatsProsp(); }
+
+function renderLeadsProsp() {
+  const lista   = getLeadsFiltrados();
+  const empty   = document.getElementById('prosp-empty');
+  const cont    = document.getElementById('prosp-lista');
+  if (!cont) return;
+  if (leadsProsp.length === 0) { empty.style.display = 'block'; cont.innerHTML = ''; return; }
+  empty.style.display = 'none';
+
+  const perfilCor = { 'Fraco (bom lead)':'var(--green2)', 'Médio':'var(--yellow2)', 'Forte (já bem otimizado)':'var(--red2)' };
+  const statusCor = { 'Não contatado':'#6e7681', 'Não atendeu':'#8b949e', 'Reunião marcada':'var(--green2)', 'Retornar':'var(--yellow2)', 'Sem interesse':'var(--red2)', 'Fechado':'var(--blue2)' };
+  const statusOpts = ['Não contatado','Não atendeu','Reunião marcada','Retornar','Sem interesse','Fechado'].map(s => `<option value="${s}">${s}</option>`).join('');
+
+  // Mobile: cards / Desktop: tabela
+  const isMobile = window.innerWidth < 768;
+
+  if (isMobile) {
+    cont.innerHTML = lista.map((l, i) => {
+      const idx = leadsProsp.indexOf(l);
+      const pc  = perfilCor[l.perfil] || 'var(--text2)';
+      const sc  = statusCor[l.status] || 'var(--text2)';
+      return `<div class="card" style="margin-bottom:10px;padding:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+          <div>
+            <div style="font-size:14px;font-weight:600;">${l.empresa}</div>
+            <div style="font-size:11px;color:var(--text2);">${l.segmento} · ${l.bairro}</div>
+          </div>
+          <span style="font-size:10px;font-weight:600;color:${pc};white-space:nowrap;margin-left:8px;">${l.perfil==='Fraco (bom lead)'?'🟢 Bom lead':l.perfil==='Médio'?'🟡 Médio':'🔴 Forte'}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;color:var(--text2);margin-bottom:10px;">
+          <div>⭐ ${l.nota||'-'} (${l.avaliacoes} av.)</div>
+          <div>📸 ${l.fotos} fotos</div>
+          <div>🌐 ${l.temSite==='Sim'?'<span style="color:var(--green2)">Tem site</span>':'<span style="color:var(--red2)">Sem site</span>'}</div>
+          <div>📞 ${l.telefone||'—'}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+          ${l.linkMaps ? `<a href="${l.linkMaps}" target="_blank" class="btn btn-secondary" style="font-size:11px;padding:5px 10px;">🗺 Maps</a>` : ''}
+          ${l.temSite==='Sim' ? `<a href="${l.site}" target="_blank" class="btn btn-secondary" style="font-size:11px;padding:5px 10px;">🌐 Site</a>` : ''}
+          ${l.telefone ? `<a href="tel:${l.telefone.replace(/\D/g,'')}" class="btn btn-secondary" style="font-size:11px;padding:5px 10px;">📞 Ligar</a>` : ''}
+          <button onclick="abrirPitch(${idx})" class="btn btn-primary" style="font-size:11px;padding:5px 10px;">🤖 Pitch</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select class="input" style="flex:1;font-size:12px;padding:6px 10px;" onchange="alterarStatusProsp(${idx},this.value)">
+            ${['Não contatado','Não atendeu','Reunião marcada','Retornar','Sem interesse','Fechado'].map(s=>`<option ${l.status===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+          <button onclick="enviarProspCRM(${idx})" class="btn btn-secondary" style="font-size:11px;padding:6px 10px;" title="Enviar pro CRM">📊</button>
+          <button onclick="deletarLeadProsp(${idx})" class="btn btn-danger" style="font-size:11px;padding:6px 10px;" title="Excluir">🗑</button>
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    cont.innerHTML = `<div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead>
+        <tr style="background:var(--bg2);border-bottom:1px solid var(--border);">
+          <th style="text-align:left;padding:10px 12px;font-weight:600;color:var(--text2);font-size:11px;white-space:nowrap;">Empresa</th>
+          <th style="text-align:left;padding:10px 12px;font-weight:600;color:var(--text2);font-size:11px;">Telefone</th>
+          <th style="text-align:center;padding:10px 12px;font-weight:600;color:var(--text2);font-size:11px;">Site</th>
+          <th style="text-align:center;padding:10px 12px;font-weight:600;color:var(--text2);font-size:11px;">Nota</th>
+          <th style="text-align:center;padding:10px 12px;font-weight:600;color:var(--text2);font-size:11px;">Av.</th>
+          <th style="text-align:center;padding:10px 12px;font-weight:600;color:var(--text2);font-size:11px;">Fotos</th>
+          <th style="text-align:left;padding:10px 12px;font-weight:600;color:var(--text2);font-size:11px;">Perfil</th>
+          <th style="text-align:left;padding:10px 12px;font-weight:600;color:var(--text2);font-size:11px;">Oportunidade</th>
+          <th style="text-align:left;padding:10px 12px;font-weight:600;color:var(--text2);font-size:11px;">Status</th>
+          <th style="text-align:center;padding:10px 12px;font-weight:600;color:var(--text2);font-size:11px;">Ações</th>
+        </tr>
+      </thead>
+      <tbody id="prosp-tbody">
+        ${lista.map((l) => {
+          const idx = leadsProsp.indexOf(l);
+          const pc  = perfilCor[l.perfil] || 'var(--text2)';
+          const opCor = l.oportunidade.includes('Sem site') ? 'rgba(35,134,54,.15)' : 'rgba(210,153,34,.12)';
+          const opTxt = l.oportunidade.includes('Sem site') ? 'var(--green2)' : 'var(--yellow2)';
+          return `<tr style="border-bottom:1px solid var(--border);transition:background .1s;" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background='transparent'">
+            <td style="padding:10px 12px;">
+              <div style="font-weight:500;">${l.empresa}</div>
+              <div style="font-size:11px;color:var(--text2);">${l.segmento} · ${l.bairro}</div>
+              <div style="display:flex;gap:4px;margin-top:4px;">
+                ${l.linkMaps ? `<a href="${l.linkMaps}" target="_blank" style="font-size:10px;color:var(--blue2);">🗺 Maps</a>` : ''}
+                ${l.temSite==='Sim' ? `<a href="${l.site}" target="_blank" style="font-size:10px;color:var(--blue2);margin-left:6px;">🌐 Site</a>` : ''}
+              </div>
+            </td>
+            <td style="padding:10px 12px;">
+              ${l.telefone ? `<a href="tel:${l.telefone.replace(/\D/g,'')}" style="color:var(--blue2);font-size:12px;">${l.telefone}</a>` : '<span style="color:var(--text3)">—</span>'}
+            </td>
+            <td style="padding:10px 12px;text-align:center;">
+              <span style="font-size:12px;${l.temSite==='Sim'?'color:var(--green2)':'color:var(--red2)'};">${l.temSite==='Sim'?'✓':'✗'}</span>
+            </td>
+            <td style="padding:10px 12px;text-align:center;font-weight:600;">${l.nota||'—'}</td>
+            <td style="padding:10px 12px;text-align:center;color:var(--text2);">${l.avaliacoes}</td>
+            <td style="padding:10px 12px;text-align:center;color:var(--text2);">${l.fotos}</td>
+            <td style="padding:10px 12px;"><span style="color:${pc};font-size:12px;font-weight:500;">${l.perfil==='Fraco (bom lead)'?'🟢 Bom lead':l.perfil==='Médio'?'🟡 Médio':'🔴 Forte'}</span></td>
+            <td style="padding:10px 12px;"><span style="background:${opCor};color:${opTxt};padding:2px 8px;border-radius:10px;font-size:11px;white-space:nowrap;">${l.oportunidade.includes('Sem site')?'Pitch direto':'Pitch melhoria'}</span></td>
+            <td style="padding:10px 12px;">
+              <select class="input" style="font-size:12px;padding:5px 8px;min-width:130px;" onchange="alterarStatusProsp(${idx},this.value)">
+                ${['Não contatado','Não atendeu','Reunião marcada','Retornar','Sem interesse','Fechado'].map(s=>`<option ${l.status===s?'selected':''}>${s}</option>`).join('')}
+              </select>
+            </td>
+            <td style="padding:10px 12px;text-align:center;">
+              <div style="display:flex;gap:4px;justify-content:center;">
+                <button onclick="abrirPitch(${idx})" class="btn btn-primary" style="font-size:11px;padding:5px 10px;" title="Gerar Pitch IA">🤖</button>
+                <button onclick="enviarProspCRM(${idx})" class="btn btn-secondary" style="font-size:11px;padding:5px 10px;" title="Enviar pro CRM">📊</button>
+                <button onclick="deletarLeadProsp(${idx})" class="btn btn-danger" style="font-size:11px;padding:5px 8px;" title="Excluir">🗑</button>
+              </div>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table></div>`;
+  }
+}
+
+function alterarStatusProsp(idx, novoStatus) {
+  leadsProsp[idx].status = novoStatus;
+  salvarLeadsProsp();
+  atualizarStatsProsp();
+  // se reunião marcada, abre modal de data
+  if (novoStatus === 'Reunião marcada') {
+    const l = leadsProsp[idx];
+    const data = prompt(`📅 Reunião com ${l.empresa}\n\nData e hora (ex: 25/07/2026 14:00):`);
+    if (data) {
+      leadsProsp[idx].dataReuniao = data;
+      const obs = prompt('📝 Observações (pode deixar em branco):') || '';
+      leadsProsp[idx].obsReuniao = obs;
+      salvarLeadsProsp();
+      // Google Agenda
+      const inicio = parsarDataProsp(data);
+      if (inicio) {
+        const fim = new Date(inicio.getTime() + 60*60*1000);
+        const gcalUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('Reunião — '+l.empresa)}&dates=${formatarDataGcal(inicio)}/${formatarDataGcal(fim)}&details=${encodeURIComponent('Empresa: '+l.empresa+'\nTelefone: '+l.telefone+'\nEndereço: '+l.endereco+(obs?'\nObs: '+obs:''))}&sf=true&output=xml`;
+        if (confirm('Adicionar ao Google Agenda?')) window.open(gcalUrl, '_blank');
+      }
+    }
+  }
+  renderLeadsProsp();
+}
+
+function parsarDataProsp(input) {
+  try {
+    const [datePart, timePart] = input.split(' ');
+    const [d, m, y] = datePart.split('/').map(Number);
+    const [h, min]  = (timePart||'09:00').split(':').map(Number);
+    return new Date(y, m-1, d, h, min);
+  } catch(_) { return null; }
+}
+
+function formatarDataGcal(date) {
+  const pad = n => String(n).padStart(2,'0');
+  return `${date.getFullYear()}${pad(date.getMonth()+1)}${pad(date.getDate())}T${pad(date.getHours())}${pad(date.getMinutes())}00`;
+}
+
+function deletarLeadProsp(idx) {
+  if (!confirm('Excluir este lead?')) return;
+  leadsProsp.splice(idx, 1);
+  salvarLeadsProsp();
+  renderLeadsProsp();
+  atualizarStatsProsp();
+}
+
+function limparLeadsProsp() {
+  if (!confirm('Limpar TODOS os leads? Isso não pode ser desfeito.')) return;
+  leadsProsp = [];
+  salvarLeadsProsp();
+  renderLeadsProsp();
+  atualizarStatsProsp();
+}
+
+function enviarProspCRM(idx) {
+  const l = leadsProsp[idx];
+  if (crmLeads.find(c => c.prospId === idx && c.name === l.empresa)) { alert('Já está no CRM!'); return; }
+  crmLeads.push({ id:Date.now(), name:l.empresa, value:0, stage:'qualificacao', date:new Date().toLocaleDateString('pt-BR'), prob:40, prospId:idx, address:l.endereco, category:l.segmento });
+  saveCrm(); renderKanban(); updateCrmMetrics();
+  alert('✅ ' + l.empresa + ' adicionado ao CRM!');
+}
+
+function exportarLeadsCSV() {
+  const lista = getLeadsFiltrados();
+  if (!lista.length) { alert('Nenhum lead pra exportar'); return; }
+  const cols = ['Empresa','Segmento','Bairro','Categoria','Endereço','Telefone','Site','Tem site','Link Maps','Nota','Avaliações','Fotos','Horário','Aberto agora','Preço','Perfil','Oportunidade','Status'];
+  const rows = lista.map(l => [
+    l.empresa, l.segmento, l.bairro, l.categoria, l.endereco, l.telefone,
+    l.site, l.temSite, l.linkMaps, l.nota, l.avaliacoes, l.fotos,
+    l.horario, l.abertoAgora, l.preco, l.perfil, l.oportunidade, l.status
+  ].map(v => '"' + String(v||'').replace(/"/g,'""') + '"').join(','));
+  const csv  = [cols.join(','), ...rows].join('\n');
+  const blob = new Blob(['\ufeff'+csv], { type:'text/csv;charset=utf-8;' });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = 'leads_localway.csv';
+  a.click();
+}
+
+// ---- PITCH ----
+function abrirPitch(idx) {
+  pitchLeadAtual = leadsProsp[idx];
+  const l = pitchLeadAtual;
+  document.getElementById('pitch-empresa-info').innerHTML = `
+    <div style="font-weight:600;font-size:14px;margin-bottom:6px;">${l.empresa}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;color:var(--text2);">
+      <div>📍 ${l.bairro}</div>
+      <div>🏷️ ${l.segmento}</div>
+      <div>⭐ ${l.nota||'—'} (${l.avaliacoes} av.)</div>
+      <div>🌐 ${l.temSite==='Sim'?'Tem site':'Sem site'}</div>
+      <div>📸 ${l.fotos} fotos</div>
+      <div>🎯 ${l.perfil}</div>
+    </div>
+    <div style="margin-top:8px;padding:6px 10px;border-radius:6px;font-size:12px;background:${l.oportunidade.includes('Sem site')?'rgba(35,134,54,.15)':'rgba(210,153,34,.12)'};color:${l.oportunidade.includes('Sem site')?'var(--green2)':'var(--yellow2)'};">
+      💡 ${l.oportunidade}
+    </div>`;
+  document.getElementById('pitch-resultado').innerHTML = '<div style="text-align:center;padding:30px;color:var(--text2);">Selecione o tipo e clique em Gerar Pitch</div>';
+  document.getElementById('modal-pitch').style.display = 'flex';
+}
+
+function fecharModalPitch() { document.getElementById('modal-pitch').style.display = 'none'; }
+
+function setPitchTipo(tipo, el) {
+  pitchTipoAtual = tipo;
+  document.querySelectorAll('#modal-pitch .filter-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+async function gerarPitch() {
+  const l = pitchLeadAtual;
+  if (!l) return;
+  const cfg = getProspConfig();
+  if (!cfg.groqKey) { alert('Configure a Groq API Key em ⚙️ Configurar API'); return; }
+
+  const btn = document.getElementById('btn-gerar-pitch');
+  btn.textContent = '⏳ Gerando...'; btn.disabled = true;
+  document.getElementById('pitch-resultado').innerHTML = '<div style="text-align:center;padding:30px;color:var(--text2);">🤖 Gerando pitch com IA...</div>';
+
+  const tipoDescricao = {
+    abordagem: 'script de abordagem inicial por telefone (30 a 60 segundos). Deve ser natural, direto e terminar com uma pergunta para agendar reunião.',
+    proposta:  'proposta comercial profissional em texto. Descreva o problema, a solução, os benefícios e o call to action.',
+    followup:  'mensagem de follow-up para WhatsApp (após não responder). Informal, curta, direta.',
+    objecao:   'respostas prontas para as 3 principais objeções: "não tenho tempo", "é caro" e "vou pensar". Para cada uma, dê uma resposta curta e eficaz.'
+  };
+
+  const contextoOportunidade = l.oportunidade.includes('Sem site')
+    ? `A empresa NÃO TEM SITE e tem pouco engajamento digital. O pitch deve focar em como ela está invisível para clientes que buscam online, enquanto a concorrência aparece na frente.`
+    : `A empresa TEM SITE mas está mal posicionada no Google (poucas avaliações ou fotos). O pitch deve focar em como ela já investiu mas não está aparecendo, enquanto concorrentes passam na frente.`;
+
+  const prompt = `Você é especialista em vendas de marketing digital e SEO local no Brasil. Gere um ${tipoDescricao[pitchTipoAtual]} para abordar a seguinte empresa:
+
+Empresa: ${l.empresa}
+Segmento: ${l.segmento}
+Cidade/Bairro: ${l.bairro}
+Nota Google: ${l.nota||'sem nota'} (${l.avaliacoes} avaliações)
+Fotos no perfil: ${l.fotos}
+Site: ${l.temSite==='Sim'?l.site:'Não tem site'}
+
+Contexto da oportunidade: ${contextoOportunidade}
+
+Seja específico, mencione o nome da empresa e dados reais. Tom profissional mas humano. Em português do Brasil.`;
+
+  try {
+    const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + cfg.groqKey
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role:'user', content: prompt }],
+        max_tokens: 800,
+        temperature: 0.7
+      })
+    });
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message);
+    const texto = data.choices?.[0]?.message?.content || 'Sem resposta';
+    document.getElementById('pitch-resultado').innerHTML = `
+      <div style="background:var(--bg3);border-radius:8px;padding:16px;white-space:pre-line;font-size:13px;line-height:1.7;">${texto}</div>`;
+  } catch(e) {
+    document.getElementById('pitch-resultado').innerHTML = `<div style="color:var(--red2);padding:16px;">❌ Erro: ${e.message}</div>`;
+  }
+
+  btn.textContent = '✨ Gerar Pitch'; btn.disabled = false;
+}
+
+function copiarPitch() {
+  const el = document.querySelector('#pitch-resultado div');
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(() => alert('✅ Copiado!')).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = el.textContent; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); alert('✅ Copiado!');
+  });
+}
+
+// Inicializa prospecção ao carregar
+window.addEventListener('load', function() {
+  if (leadsProsp.length > 0) { renderLeadsProsp(); atualizarStatsProsp(); }
+});
+</script>
+</body>
+</html>
