@@ -122,6 +122,9 @@ function enterApp(profile) {
       if (data.calendar_id) localStorage.setItem('prosp_calendar_id', data.calendar_id);
     }
   });
+
+  // Puxa leads, CRM, análises e propostas — iguais em qualquer aparelho.
+  if (typeof carregarDadosDoTime === 'function') carregarDadosDoTime();
 }
 
 function showLogin() {
