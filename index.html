@@ -1965,6 +1965,7 @@ async function executarGerarLeads() {
         dataReuniao: '',
         obsReuniao:  '',
         dataAdicionado: new Date().toLocaleDateString('pt-BR'),
+        _ts: Date.now(),
         donoId:      window.currentProfile ? window.currentProfile.id : null,
         donoNome:    window.currentProfile ? (window.currentProfile.nome || window.currentProfile.email) : ''
       });
@@ -2007,6 +2008,11 @@ function atualizarStatsProsp() {
   if (lixEl) lixEl.textContent = leadsLixeira.length;
 }
 
+function atualizarContadorLixeira() {
+  const lixEl = document.getElementById('lixeira-count');
+  if (lixEl) lixEl.textContent = leadsLixeira.length;
+}
+
 function getLeadsFiltrados() {
   const q       = (document.getElementById('prosp-search')?.value || '').toLowerCase();
   const perfil  = document.getElementById('prosp-filter-perfil')?.value || '';
@@ -2021,7 +2027,9 @@ function getLeadsFiltrados() {
     if (site   && l.temSite !== site)  return false;
     if (status && l.status !== status) return false;
     return true;
-  });
+  })
+  // Sempre exibe os mais recentes no topo (_ts = timestamp de criação)
+  .sort((a, b) => (b._ts || 0) - (a._ts || 0));
 }
 
 function filtrarLeadsProsp() { renderLeadsProsp(); atualizarStatsProsp(); }
