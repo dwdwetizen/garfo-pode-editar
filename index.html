@@ -2196,23 +2196,13 @@ async function executarGerarLeads() {
   showLoading('Buscando ' + segmento + ' em ' + bairro + '...');
 
   try {
-    // Usa Places API (New) via fetch direto com a chave do localStorage
+    // Usa Places API (New) via proxy do servidor (/api/places?action=leads)
+    // Chamada direta do navegador é bloqueada por CORS — por isso vai pelo proxy.
     const query = segmento + ' em ' + bairro;
-    const fieldMask = [
-      'places.id','places.displayName','places.formattedAddress',
-      'places.googleMapsUri','places.nationalPhoneNumber','places.internationalPhoneNumber',
-      'places.websiteUri','places.rating','places.userRatingCount',
-      'places.photos','places.currentOpeningHours','places.regularOpeningHours',
-      'places.priceLevel','places.primaryTypeDisplayName','places.businessStatus'
-    ].join(',');
 
-    const resp = await fetch('https://places.googleapis.com/v1/places:searchText', {
+    const resp = await fetch('/api/places?action=leads', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Goog-Api-Key': cfg.googleKey,
-        'X-Goog-FieldMask': fieldMask
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ textQuery: query, languageCode: 'pt-BR', regionCode: 'BR', maxResultCount: 20 })
     });
 
