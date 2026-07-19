@@ -39,102 +39,34 @@
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; overflow:hidden; }
-
-/* SIDEBAR */
-.sidebar {
-  width: var(--sidebar-w);
-  background: var(--bg2);
-  border-right: 1px solid var(--border);
-  display: flex; flex-direction: column;
-  height: 100vh; position: fixed; left:0; top:0; z-index:100;
-  transition: width .3s;
-}
+.sidebar { width: var(--sidebar-w); background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; height: 100vh; position: fixed; left:0; top:0; z-index:100; transition: width .3s; }
 .sidebar.collapsed { width: 56px; }
-.sidebar-logo {
-  padding: 16px 14px;
-  display: flex; align-items: center; gap:10px;
-  border-bottom: 1px solid var(--border);
-  min-height: 64px;
-}
-.logo-icon {
-  width:36px; height:36px; border-radius:10px;
-  background: linear-gradient(135deg,#2563eb,#2563eb);
-  display:flex; align-items:center; justify-content:center;
-  font-size:18px; flex-shrink:0;
-}
+.sidebar-logo { padding: 16px 14px; display: flex; align-items: center; gap:10px; border-bottom: 1px solid var(--border); min-height: 64px; }
+.logo-icon { width:36px; height:36px; border-radius:10px; background: linear-gradient(135deg,#2563eb,#2563eb); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
 .logo-text { font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:14px; white-space:nowrap; overflow:hidden; }
 .logo-text span { color:var(--purple3); }
-.sidebar-user {
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--border);
-  display:flex; align-items:center; gap:10px;
-}
-.user-avatar {
-  width:32px; height:32px; border-radius:50%;
-  background: linear-gradient(135deg,#2563eb,#2563eb);
-  display:flex; align-items:center; justify-content:center;
-  font-size:12px; font-weight:600; flex-shrink:0;
-}
+.sidebar-user { padding: 12px 14px; border-bottom: 1px solid var(--border); display:flex; align-items:center; gap:10px; }
+.user-avatar { width:32px; height:32px; border-radius:50%; background: linear-gradient(135deg,#2563eb,#2563eb); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; flex-shrink:0; }
 .user-info { overflow:hidden; }
 .user-name { font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .user-email { font-size:10px; color:var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .user-badge { font-size:9px; background:var(--blue); color:#fff; padding:1px 6px; border-radius:4px; display:inline-block; margin-top:2px; }
 .sidebar-nav { flex:1; overflow-y:auto; padding:8px 0; }
-.nav-item {
-  display:flex; align-items:center; gap:10px;
-  padding: 9px 14px; cursor:pointer;
-  border-radius: var(--radius-sm); margin: 1px 6px;
-  transition: background .15s; color:var(--text2);
-  font-size:13px; white-space:nowrap; overflow:hidden;
-  border: none; background:none; width:calc(100% - 12px); text-align:left;
-}
+.nav-item { display:flex; align-items:center; gap:10px; padding: 9px 14px; cursor:pointer; border-radius: var(--radius-sm); margin: 1px 6px; transition: background .15s; color:var(--text2); font-size:13px; white-space:nowrap; overflow:hidden; border: none; background:none; width:calc(100% - 12px); text-align:left; }
 .nav-item:hover { background:var(--bg3); color:var(--text); }
 .nav-item.active { background:rgba(37,99,235,.15); color:var(--purple3); }
 .nav-icon { font-size:16px; flex-shrink:0; width:20px; text-align:center; }
 .nav-label { white-space:nowrap; overflow:hidden; }
-.sidebar-bottom {
-  padding:8px 0; border-top:1px solid var(--border);
-}
-.sidebar-toggle {
-  position:absolute; right:-12px; top:72px;
-  width:24px; height:24px; border-radius:50%;
-  background:var(--bg2); border:1px solid var(--border);
-  display:flex; align-items:center; justify-content:center;
-  cursor:pointer; font-size:10px; z-index:101;
-}
-.sidebar.collapsed .nav-label,
-.sidebar.collapsed .logo-text,
-.sidebar.collapsed .user-info { display:none; }
-
-/* MAIN */
-.main {
-  margin-left: var(--sidebar-w);
-  flex:1; overflow-y:auto; height:100vh;
-  background:var(--bg);
-  transition: margin-left .3s;
-}
+.sidebar-bottom { padding:8px 0; border-top:1px solid var(--border); }
+.sidebar-toggle { position:absolute; right:-12px; top:72px; width:24px; height:24px; border-radius:50%; background:var(--bg2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:10px; z-index:101; }
+.sidebar.collapsed .nav-label, .sidebar.collapsed .logo-text, .sidebar.collapsed .user-info { display:none; }
+.main { margin-left: var(--sidebar-w); flex:1; overflow-y:auto; height:100vh; background:var(--bg); transition: margin-left .3s; }
 .main.expanded { margin-left:56px; }
-
-/* PAGES */
 .page { display:none; padding:28px 32px; min-height:100vh; }
 .page.active { display:block; }
-
-/* CARDS */
-.card {
-  background:var(--bg2); border:1px solid var(--border);
-  border-radius:var(--radius); padding:20px;
-  box-shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
-  transition:border-color .15s;
-}
+.card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:20px; box-shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5); transition:border-color .15s; }
 .card-sm { padding:14px 16px; }
-
-/* BUTTONS */
-.btn {
-  display:inline-flex; align-items:center; gap:8px;
-  padding:9px 18px; border-radius:var(--radius-sm);
-  font-size:13px; font-weight:500; cursor:pointer;
-  border:none; transition:all .15s; text-decoration:none;
-}
+.btn { display:inline-flex; align-items:center; gap:8px; padding:9px 18px; border-radius:var(--radius-sm); font-size:13px; font-weight:500; cursor:pointer; border:none; transition:all .15s; text-decoration:none; }
 .btn-primary { background:linear-gradient(135deg,var(--purple),var(--blue)); color:#fff; }
 .btn-primary:hover { opacity:.9; transform:translateY(-1px); }
 .btn-secondary { background:var(--bg3); color:var(--text); border:1px solid var(--border); }
@@ -146,45 +78,26 @@ body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); 
 .btn-danger { background:transparent; color:var(--red2); border:1px solid var(--red2); font-size:12px; }
 .btn-danger:hover { background:rgba(218,54,51,.1); }
 .btn-lg { padding:14px 28px; font-size:15px; border-radius:10px; width:100%; justify-content:center; }
-
-/* INPUTS */
 .input-group { margin-bottom:16px; }
 .input-label { font-size:13px; font-weight:500; margin-bottom:6px; display:block; color:var(--text2); }
-.input {
-  width:100%; padding:12px 16px;
-  background:var(--bg); border:1.5px solid var(--border);
-  border-radius:var(--radius-sm); color:var(--text);
-  font-size:14px; font-family:inherit; transition:border .2s;
-  outline:none;
-}
+.input { width:100%; padding:12px 16px; background:var(--bg); border:1.5px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-size:14px; font-family:inherit; transition:border .2s; outline:none; }
 .input:focus { border-color:var(--purple); }
 .input::placeholder { color:var(--text3); }
 select.input { cursor:pointer; }
-
-/* BADGES */
-.badge {
-  display:inline-flex; align-items:center; gap:4px;
-  padding:3px 10px; border-radius:20px; font-size:11px; font-weight:500;
-}
+.badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:500; }
 .badge-green { background:rgba(35,134,54,.2); color:var(--green2); }
 .badge-yellow { background:rgba(210,153,34,.2); color:var(--yellow2); }
 .badge-red { background:rgba(218,54,51,.2); color:var(--red2); }
 .badge-blue { background:rgba(31,111,235,.2); color:var(--blue2); }
 .badge-purple { background:rgba(37,99,235,.2); color:var(--purple3); }
-
-/* PILLAR CARDS */
 .pillar-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; }
-.pillar-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:16px; text-align:center; }
+.pillar-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:16px; text-align:center; cursor:default; }
 .pillar-icon { font-size:24px; margin-bottom:8px; }
 .pillar-name { font-size:10px; font-weight:600; letter-spacing:.5px; color:var(--text2); text-transform:uppercase; margin-bottom:6px; }
 .pillar-score { font-size:28px; font-weight:700; margin-bottom:4px; }
 .pillar-bar { height:4px; background:var(--bg3); border-radius:2px; margin-bottom:6px; }
 .pillar-bar-fill { height:100%; border-radius:2px; transition:width .8s; }
 .pillar-pct { font-size:11px; color:var(--text2); }
-
-
-/* PILLAR DETAILS */
-.pillar-card { cursor:default; }
 .pillar-details { display:none; text-align:left; border-top:1px solid var(--border); padding-top:10px; margin-top:8px; }
 .pillar-details.open { display:block; }
 .criteria-label { font-size:9px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:.6px; margin-bottom:8px; }
@@ -201,65 +114,32 @@ select.input { cursor:pointer; }
 .criteria-pts { font-size:10px; font-weight:700; white-space:nowrap; }
 .toggle-details-btn { width:100%; font-size:10px; padding:4px 8px; background:var(--bg3); border:1px solid var(--border); border-radius:6px; color:var(--text2); cursor:pointer; margin-top:8px; transition:all .15s; }
 .toggle-details-btn:hover { background:var(--bg4); color:var(--text); }
-
-/* PROGRESS BARS */
-.prog-bar { margin-bottom:18px; }
-.prog-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
-.prog-label { font-size:13px; font-weight:500; display:flex; align-items:center; gap:6px; }
-.prog-track { height:14px; background:var(--bg3); border-radius:7px; position:relative; overflow:hidden; }
-.prog-fill { height:100%; border-radius:7px; display:flex; align-items:center; justify-content:flex-end; padding-right:8px; font-size:10px; font-weight:600; color:#fff; transition:width 1s; }
-.prog-sector { width:3px; height:100%; background:rgba(255,255,255,.3); position:absolute; }
-
-/* INSIGHTS */
-.insight-card {
-  border:1.5px solid; border-radius:var(--radius-sm);
-  padding:14px 16px; margin-bottom:10px;
-}
+.insight-card { border:1.5px solid; border-radius:var(--radius-sm); padding:14px 16px; margin-bottom:10px; }
 .insight-card.warning { border-color:rgba(210,153,34,.4); background:rgba(210,153,34,.05); }
 .insight-card.success { border-color:rgba(35,134,54,.4); background:rgba(35,134,54,.05); }
 .insight-card.danger { border-color:rgba(218,54,51,.4); background:rgba(218,54,51,.05); }
 .insight-title { font-size:13px; font-weight:600; margin-bottom:4px; }
 .insight-desc { font-size:12px; color:var(--text2); margin-bottom:4px; }
 .insight-action { font-size:12px; color:var(--blue2); }
-
-/* ANALYSES LIST */
 .analyses-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-.analysis-card {
-  background:var(--bg2); border:1px solid var(--border);
-  border-radius:var(--radius); padding:18px 20px; cursor:pointer;
-  transition:border-color .2s, transform .1s;
-}
+.analysis-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; cursor:pointer; transition:border-color .2s, transform .1s; }
 .analysis-card:hover { border-color:var(--purple); transform:translateY(-1px); }
 .analysis-name { font-size:15px; font-weight:600; margin-bottom:2px; }
 .analysis-cat { font-size:12px; color:var(--text2); margin-bottom:12px; }
 .analysis-score-big { font-size:28px; font-weight:700; float:right; margin-top:-36px; }
 .analysis-divider { height:1px; background:var(--border); margin:10px 0; }
 .analysis-meta { display:flex; align-items:center; justify-content:space-between; font-size:12px; }
-
-/* GEOGRID */
 .geogrid-config { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:20px; }
 .geogrid-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 .cost-bar { background:var(--bg3); border-radius:var(--radius-sm); padding:12px 16px; display:flex; justify-content:space-between; align-items:center; margin-top:12px; }
-
-/* MAP */
 #map-container, #crm-map-container { width:100%; height:480px; border-radius:var(--radius); overflow:hidden; border:1px solid var(--border); }
 .leaflet-container { background:var(--bg3); }
-
-/* RAIO-X */
 .raiox-wrap { display:grid; grid-template-columns:300px 1fr; gap:0; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
 .raiox-sidebar { background:var(--bg2); border-right:1px solid var(--border); padding:16px; overflow-y:auto; max-height:600px; }
-.competitor-item {
-  display:flex; align-items:center; gap:10px;
-  padding:10px 12px; border-radius:var(--radius-sm);
-  cursor:pointer; transition:background .15s; margin-bottom:4px;
-}
+.competitor-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:var(--radius-sm); cursor:pointer; transition:background .15s; margin-bottom:4px; }
 .competitor-item:hover { background:var(--bg3); }
 .competitor-item.active { background:rgba(37,99,235,.15); border:1px solid rgba(37,99,235,.3); }
-.competitor-rank {
-  width:28px; height:28px; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  font-size:12px; font-weight:700; flex-shrink:0;
-}
+.competitor-rank { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0; }
 .rank-1 { background:linear-gradient(135deg,#f59e0b,#d97706); color:#fff; }
 .rank-2 { background:var(--bg3); color:var(--text2); }
 .rank-3 { background:var(--bg3); color:var(--text2); }
@@ -267,29 +147,17 @@ select.input { cursor:pointer; }
 .rank-other { background:var(--bg4); color:var(--text2); }
 .comp-name { font-size:12px; font-weight:500; }
 .comp-stars { font-size:11px; color:var(--yellow2); }
-
-/* CRM / KANBAN */
 .kanban-board { display:flex; gap:12px; overflow-x:auto; padding-bottom:12px; }
-.kanban-col {
-  min-width:220px; flex-shrink:0;
-  background:var(--bg2); border:1px solid var(--border);
-  border-radius:var(--radius); padding:12px;
-}
+.kanban-col { min-width:220px; flex-shrink:0; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:12px; }
 .kanban-col-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
 .kanban-col-title { font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px; }
 .kanban-col-count { font-size:11px; background:var(--bg3); padding:1px 7px; border-radius:10px; color:var(--text2); }
-.kanban-card {
-  background:var(--bg); border:1px solid var(--border);
-  border-radius:var(--radius-sm); padding:12px; margin-bottom:8px;
-  cursor:grab; transition:border-color .15s;
-}
+.kanban-card { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; margin-bottom:8px; cursor:grab; transition:border-color .15s; }
 .kanban-card:hover { border-color:var(--purple); }
 .kanban-card-meta { font-size:10px; color:var(--text2); margin-bottom:4px; display:flex; justify-content:space-between; }
 .kanban-card-name { font-size:13px; font-weight:500; margin-bottom:6px; }
 .kanban-card-value { font-size:15px; font-weight:700; color:var(--green2); }
 .col-status-dot { width:8px; height:8px; border-radius:50%; }
-
-/* SERVICES */
 .service-section { margin-bottom:20px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
 .service-section-header { padding:16px 20px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
 .service-section-header:hover { background:var(--bg3); }
@@ -299,50 +167,19 @@ select.input { cursor:pointer; }
 .service-item-desc { font-size:12px; color:var(--text2); line-height:1.5; }
 .service-item-price { font-size:14px; font-weight:600; color:var(--green2); white-space:nowrap; }
 .service-actions { display:flex; gap:6px; align-items:center; }
-
-/* PROPOSALS */
-.proposal-item {
-  background:var(--bg2); border:1px solid var(--border);
-  border-radius:var(--radius); padding:16px 20px; margin-bottom:10px;
-  display:flex; align-items:center; gap:16px;
-}
-.proposal-avatar {
-  width:40px; height:40px; border-radius:10px;
-  background:linear-gradient(135deg,var(--purple),var(--blue));
-  display:flex; align-items:center; justify-content:center;
-  font-size:16px; font-weight:700; flex-shrink:0;
-}
-
-/* LOADING */
-.loading-overlay {
-  position:fixed; inset:0; background:rgba(13,17,23,.9);
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  z-index:1000; display:none;
-}
-.loading-spinner {
-  width:48px; height:48px; border:3px solid var(--border);
-  border-top-color:var(--purple); border-radius:50%;
-  animation:spin .8s linear infinite; margin-bottom:16px;
-}
+.proposal-item { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:16px 20px; margin-bottom:10px; display:flex; align-items:center; gap:16px; }
+.proposal-avatar { width:40px; height:40px; border-radius:10px; background:linear-gradient(135deg,var(--purple),var(--blue)); display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; flex-shrink:0; }
+.loading-overlay { position:fixed; inset:0; background:rgba(13,17,23,.9); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1000; display:none; }
+.loading-spinner { width:48px; height:48px; border:3px solid var(--border); border-top-color:var(--purple); border-radius:50%; animation:spin .8s linear infinite; margin-bottom:16px; }
 @keyframes spin { to { transform:rotate(360deg); } }
 .loading-text { font-size:14px; color:var(--text2); }
-
-/* TABS */
 .tabs { display:flex; border-bottom:1px solid var(--border); margin-bottom:20px; gap:0; }
-.tab {
-  padding:10px 20px; font-size:13px; font-weight:500;
-  cursor:pointer; border-bottom:2px solid transparent;
-  color:var(--text2); transition:all .15s;
-}
+.tab { padding:10px 20px; font-size:13px; font-weight:500; cursor:pointer; border-bottom:2px solid transparent; color:var(--text2); transition:all .15s; }
 .tab.active { color:var(--purple3); border-bottom-color:var(--purple3); }
 .tab:hover { color:var(--text); }
-
-/* CRM VIEW TOGGLES */
 .view-toggle { display:flex; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:3px; gap:3px; }
 .view-btn { padding:6px 10px; border-radius:6px; cursor:pointer; font-size:13px; border:none; background:none; color:var(--text2); }
 .view-btn.active { background:var(--bg3); color:var(--text); }
-
-/* METRIC CARDS */
 .metric-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px; }
 .metric-card { border-radius:var(--radius); padding:20px; }
 .metric-card.orange { background:linear-gradient(135deg,#d97706,#b45309); }
@@ -352,25 +189,14 @@ select.input { cursor:pointer; }
 .metric-label { font-size:12px; font-weight:500; opacity:.85; display:flex; align-items:center; gap:6px; }
 .metric-value { font-size:32px; font-weight:700; margin:4px 0 2px; font-family:'JetBrains Mono',monospace; letter-spacing:-0.02em; }
 .metric-meta { font-size:11px; opacity:.75; }
-
-/* SCROLLBAR */
 ::-webkit-scrollbar { width:5px; height:5px; }
 ::-webkit-scrollbar-track { background:var(--bg); }
 ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
-
-/* SECTION HEADER */
 .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
 .section-title { font-size:22px; font-weight:700; display:flex; align-items:center; gap:10px; }
 .section-sub { font-size:13px; color:var(--text2); margin-top:4px; }
-
-/* HEATMAP GRID */
 .heatmap-grid { display:grid; gap:4px; justify-content:center; margin:16px 0; }
-.hm-cell {
-  width:44px; height:44px; border-radius:6px;
-  display:flex; align-items:center; justify-content:center;
-  font-size:13px; font-weight:700; color:#fff; cursor:pointer;
-  transition:transform .15s; position:relative;
-}
+.hm-cell { width:44px; height:44px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#fff; cursor:pointer; transition:transform .15s; position:relative; }
 .hm-cell:hover { transform:scale(1.1); z-index:10; }
 .hm-1 { background:#22c55e; }
 .hm-2 { background:#4ade80; }
@@ -384,43 +210,24 @@ select.input { cursor:pointer; }
 .hm-10 { background:#991b1b; }
 .hm-out { background:#374151; color:#6b7280; font-size:11px; }
 .hm-me { box-shadow:0 0 0 3px #fff, 0 0 0 5px var(--purple); }
-
-/* TOOLTIP */
 .tooltip-hm { position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%); background:var(--bg4); border:1px solid var(--border); border-radius:6px; padding:6px 10px; font-size:11px; white-space:nowrap; z-index:100; pointer-events:none; display:none; }
 .hm-cell:hover .tooltip-hm { display:block; }
-
-/* AI CHAT BUBBLE */
 .ai-bubble { background:rgba(37,99,235,.1); border:1px solid rgba(37,99,235,.3); border-radius:var(--radius); padding:14px 16px; margin-top:12px; font-size:13px; line-height:1.6; }
 .ai-bubble-header { display:flex; align-items:center; gap:8px; font-size:11px; color:var(--purple3); font-weight:600; margin-bottom:6px; }
-
 @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
 .page.active { animation:fadeIn .2s ease; }
-
 .search-bar { display:flex; gap:10px; margin-bottom:16px; }
 .search-input { flex:1; padding:10px 14px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-size:13px; outline:none; }
 .search-input:focus { border-color:var(--purple); }
-
 .profile-header { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px; }
 .verified-badge { position:absolute; top:10px; right:10px; background:#2563eb; color:#fff; font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px; }
-
 .filter-tabs { display:flex; gap:8px; margin-bottom:16px; }
 .filter-tab { padding:6px 14px; border-radius:20px; font-size:12px; font-weight:500; cursor:pointer; border:1px solid var(--border); background:var(--bg2); color:var(--text2); transition:all .15s; }
 .filter-tab.active { background:var(--purple); border-color:var(--purple); color:#fff; }
-
 .map-radius-btn { padding:6px 12px; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer; border:1px solid var(--border); background:var(--bg3); color:var(--text2); transition:all .15s; }
 .map-radius-btn.active { background:var(--purple); border-color:var(--purple); color:#fff; }
-
-/* ============ LOGIN ============ */
-#loginScreen {
-  position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center;
-  background: radial-gradient(circle at 25% 15%, rgba(37,99,235,.18) 0%, transparent 45%),
-              radial-gradient(circle at 80% 85%, rgba(96,165,250,.10) 0%, transparent 50%),
-              var(--bg);
-}
-.login-card {
-  width:340px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius);
-  padding:32px 28px; box-shadow:0 20px 50px rgba(0,0,0,.4);
-}
+#loginScreen { position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; background: radial-gradient(circle at 25% 15%, rgba(37,99,235,.18) 0%, transparent 45%), radial-gradient(circle at 80% 85%, rgba(96,165,250,.10) 0%, transparent 50%), var(--bg); }
+.login-card { width:340px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:32px 28px; box-shadow:0 20px 50px rgba(0,0,0,.4); }
 .login-logo { display:flex; align-items:center; gap:10px; margin-bottom:24px; }
 .login-logo .logo-icon { width:40px;height:40px;border-radius:10px;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:20px; }
 .login-logo .logo-text { font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:17px; }
@@ -428,15 +235,9 @@ select.input { cursor:pointer; }
 .login-sub { font-size:12px; color:var(--text2); margin-bottom:20px; }
 .login-field { margin-bottom:14px; }
 .login-field label { display:block; font-size:11px; color:var(--text2); margin-bottom:6px; }
-.login-field input {
-  width:100%; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--border);
-  background:var(--bg3); color:var(--text); font-size:13px; outline:none;
-}
+.login-field input { width:100%; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--bg3); color:var(--text); font-size:13px; outline:none; }
 .login-field input:focus { border-color:var(--purple); }
-.login-btn {
-  width:100%; padding:11px; border-radius:var(--radius-sm); border:none; background:var(--purple);
-  color:#fff; font-weight:600; font-size:13px; cursor:pointer; margin-top:6px; transition:background .15s;
-}
+.login-btn { width:100%; padding:11px; border-radius:var(--radius-sm); border:none; background:var(--purple); color:#fff; font-weight:600; font-size:13px; cursor:pointer; margin-top:6px; transition:background .15s; }
 .login-btn:hover { background:var(--purple2); }
 .login-btn:disabled { opacity:.6; cursor:default; }
 .login-error { font-size:12px; color:var(--red2); margin-top:10px; display:none; }
@@ -446,7 +247,6 @@ select.input { cursor:pointer; }
 </head>
 <body>
 
-<!-- ============ TELA DE LOGIN ============ -->
 <div id="loginScreen">
   <div class="login-card">
     <div class="login-logo">
@@ -513,7 +313,6 @@ select.input { cursor:pointer; }
 
 <main class="main" id="mainContent">
 
-  <!-- DASHBOARD -->
   <div class="page active" id="page-dashboard">
     <div class="section-header">
       <div>
@@ -538,7 +337,6 @@ select.input { cursor:pointer; }
     </div>
   </div>
 
-  <!-- NOVA ANÁLISE -->
   <div class="page" id="page-nova-analise">
     <div style="max-width:680px; margin:0 auto;">
       <div style="text-align:center; margin-bottom:32px;">
@@ -584,12 +382,10 @@ select.input { cursor:pointer; }
     </div>
   </div>
 
-  <!-- RESULTADO -->
   <div class="page" id="page-resultado">
     <div id="resultado-content"></div>
   </div>
 
-  <!-- ANÁLISES -->
   <div class="page" id="page-analises">
     <div class="section-header">
       <div>
@@ -608,7 +404,6 @@ select.input { cursor:pointer; }
     <div class="analyses-grid" id="analysesList2"></div>
   </div>
 
-  <!-- GEOGRID -->
   <div class="page" id="page-geogrid">
     <div class="section-header">
       <div>
@@ -666,7 +461,6 @@ select.input { cursor:pointer; }
     </div>
   </div>
 
-  <!-- RAIO-X -->
   <div class="page" id="page-raiox">
     <div class="section-header">
       <div>
@@ -697,7 +491,6 @@ select.input { cursor:pointer; }
     </div>
   </div>
 
-  <!-- SERVIÇOS -->
   <div class="page" id="page-servicos">
     <div class="section-header">
       <div>
@@ -709,7 +502,6 @@ select.input { cursor:pointer; }
     <div id="servicesSections"></div>
   </div>
 
-  <!-- PROPOSTAS -->
   <div class="page" id="page-propostas">
     <div class="section-header">
       <div>
@@ -725,7 +517,6 @@ select.input { cursor:pointer; }
     </div>
   </div>
 
-  <!-- PROSPECÇÃO -->
   <div class="page" id="page-prospeccao">
     <div class="section-header">
       <div>
@@ -738,7 +529,6 @@ select.input { cursor:pointer; }
       </div>
     </div>
 
-    <!-- FILTROS -->
     <div class="card" style="margin-bottom:16px;padding:14px 16px;">
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
         <input type="text" class="search-input" id="prosp-search" placeholder="🔍 Buscar empresa..." oninput="filtrarLeadsProsp()" style="flex:1;min-width:160px;">
@@ -762,11 +552,23 @@ select.input { cursor:pointer; }
           <option value="Fechado">Fechado</option>
         </select>
         <button class="btn btn-secondary" onclick="exportarLeadsCSV()" style="font-size:12px;padding:8px 14px;">📥 Exportar CSV</button>
-        <button class="btn btn-danger" onclick="limparLeadsProsp()" style="font-size:12px;padding:8px 14px;">🗑 Limpar</button>
+        <button class="btn btn-secondary" onclick="abrirLixeira()" style="font-size:12px;padding:8px 14px;">🗑️ Lixeira (<span id="lixeira-count">0</span>)</button>
+        <button class="btn btn-danger" onclick="limparLeadsProsp()" style="font-size:12px;padding:8px 14px;">🗑 Mover tudo p/ lixeira</button>
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+        <span style="font-size:12px;color:var(--text2);font-weight:600;">Mover pra lixeira por período:</span>
+        <button class="btn btn-secondary" style="font-size:11px;padding:6px 10px;" onclick="excluirLeadsPorPeriodo('hoje')">Hoje</button>
+        <button class="btn btn-secondary" style="font-size:11px;padding:6px 10px;" onclick="excluirLeadsPorPeriodo('semana')">Esta semana</button>
+        <button class="btn btn-secondary" style="font-size:11px;padding:6px 10px;" onclick="excluirLeadsPorPeriodo('mes')">Este mês</button>
+        <span style="font-size:12px;color:var(--text2);">de</span>
+        <input type="date" id="prosp-del-de" style="padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:12px;">
+        <span style="font-size:12px;color:var(--text2);">até</span>
+        <input type="date" id="prosp-del-ate" style="padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:12px;">
+        <button class="btn btn-secondary" style="font-size:11px;padding:6px 10px;" onclick="excluirLeadsPorPeriodo('intervalo')">Mover período</button>
       </div>
     </div>
 
-    <!-- STATS -->
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;" id="prosp-stats-grid">
       <div class="card card-sm" style="text-align:center;">
         <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">Total</div>
@@ -786,7 +588,6 @@ select.input { cursor:pointer; }
       </div>
     </div>
 
-    <!-- TABELA / CARDS -->
     <div id="prosp-empty" style="text-align:center;padding:60px 20px;color:var(--text2);display:none;">
       <div style="font-size:48px;margin-bottom:16px;">🎯</div>
       <div style="font-size:16px;font-weight:600;margin-bottom:8px;">Nenhum lead ainda</div>
@@ -795,7 +596,6 @@ select.input { cursor:pointer; }
     </div>
     <div id="prosp-lista"></div>
 
-    <!-- MODAL: Gerar Leads -->
     <div id="modal-gerar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;">
       <div class="card" style="width:460px;max-width:95vw;padding:24px;">
         <div style="font-size:18px;font-weight:700;margin-bottom:20px;">🔍 Gerar Leads</div>
@@ -837,7 +637,6 @@ select.input { cursor:pointer; }
       </div>
     </div>
 
-    <!-- MODAL: Config API -->
     <div id="modal-prosp-config" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;">
       <div class="card" style="width:460px;max-width:95vw;padding:24px;">
         <div style="font-size:18px;font-weight:700;margin-bottom:6px;">⚙️ Configuração de APIs</div>
@@ -859,12 +658,10 @@ select.input { cursor:pointer; }
       </div>
     </div>
 
-    <!-- MODAL: Marcar Reunião (integração nativa Google Agenda) -->
     <div id="modal-reuniao" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;padding:16px;">
       <div class="card" style="width:440px;max-width:95vw;padding:24px;">
         <div style="font-size:18px;font-weight:700;margin-bottom:4px;">📅 Marcar Reunião</div>
         <div style="font-size:12px;color:var(--text2);margin-bottom:18px;" id="reuniao-empresa-nome">—</div>
-
         <div class="input-group">
           <label class="input-label">Dia</label>
           <select class="input" id="reuniao-dia"></select>
@@ -877,15 +674,14 @@ select.input { cursor:pointer; }
           <label class="input-label">Observações</label>
           <textarea class="input" id="reuniao-obs" rows="3" placeholder="Opcional"></textarea>
         </div>
-
         <div id="reuniao-msg" style="font-size:12px;margin-bottom:10px;"></div>
-
         <div style="display:flex;gap:10px;">
           <button class="btn btn-secondary" style="flex:1;" onclick="fecharModalReuniao()">Cancelar</button>
           <button class="btn btn-primary" style="flex:2;" id="reuniao-confirmar-btn" onclick="confirmarReuniao()">✅ Confirmar e Agendar</button>
         </div>
       </div>
     </div>
+
     <div id="modal-pitch" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;padding:16px;">
       <div class="card" style="width:600px;max-width:95vw;max-height:85vh;overflow-y:auto;padding:24px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
@@ -909,9 +705,20 @@ select.input { cursor:pointer; }
       </div>
     </div>
 
+    <div id="modal-lixeira" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:600;align-items:center;justify-content:center;padding:16px;">
+      <div class="card" style="width:520px;max-width:95vw;max-height:80vh;overflow-y:auto;padding:24px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div style="font-size:18px;font-weight:700;">🗑️ Lixeira de Leads</div>
+          <button onclick="fecharLixeira()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;">✕</button>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:14px;">Leads excluídos ficam aqui até você excluir de vez ou restaurar.</div>
+        <div id="lixeira-lista"></div>
+        <button class="btn btn-danger" style="width:100%;margin-top:16px;" onclick="esvaziarLixeira()">🗑 Esvaziar lixeira (excluir tudo de vez)</button>
+      </div>
+    </div>
+
   </div>
 
-  <!-- CRM -->
   <div class="page" id="page-crm">
     <div class="section-header">
       <div>
@@ -951,24 +758,20 @@ select.input { cursor:pointer; }
     </div>
   </div>
 
-  <!-- ============ PÁGINA: VISÃO DA EQUIPE ============ -->
   <div class="page" id="page-team-view">
     <div style="max-width:820px;">
       <h2 style="margin-bottom:4px;">👀 Visão da Equipe</h2>
       <div style="color:var(--text2);font-size:13px;margin-bottom:20px;">Acompanhe o andamento dos leads e do CRM de cada funcionário (somente leitura)</div>
-
       <div class="card" style="padding:16px;margin-bottom:20px;">
         <label style="display:block;font-size:12px;color:var(--text2);margin-bottom:6px;">Escolha o funcionário</label>
         <select id="tv-select-func" style="width:100%;padding:9px 11px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;" onchange="verFuncionario(this.value)">
           <option value="">Selecione...</option>
         </select>
       </div>
-
       <div id="tv-resultado"></div>
     </div>
   </div>
 
-  <!-- ============ PÁGINA: ADMINISTRAÇÃO ============ -->
   <div class="page" id="page-admin">
     <div style="max-width:820px;">
       <h2 style="margin-bottom:4px;">⚙️ Administração</h2>
@@ -992,7 +795,6 @@ select.input { cursor:pointer; }
         </div>
         <button class="login-btn" style="width:auto;padding:9px 18px;margin-top:14px;" onclick="salvarConfigAdmin()">Salvar configurações</button>
         <div id="adm-config-msg" style="font-size:12px;margin-top:8px;"></div>
-
         <div style="border-top:1px solid var(--border);margin-top:18px;padding-top:16px;">
           <div style="font-weight:600;margin-bottom:8px;">📅 Conexão com o Google Agenda</div>
           <div id="adm-calendar-status" style="font-size:12px;color:var(--text2);margin-bottom:10px;">Verificando...</div>
@@ -1020,7 +822,7 @@ select.input { cursor:pointer; }
   </div>
 
 </main>
-</div><!-- /#appRoot -->
+</div>
 
 <script src="/admin.js"></script>
 <script src="/sync.js"></script>
@@ -1028,7 +830,6 @@ select.input { cursor:pointer; }
 
 <script src="/auth.js"></script>
 <script>
-// ===================== STATE =====================
 let analyses = JSON.parse(localStorage.getItem('gbp_analyses') || '[]');
 let services = JSON.parse(localStorage.getItem('gbp_services') || 'null') || getDefaultServices();
 let proposals = JSON.parse(localStorage.getItem('gbp_proposals') || '[]');
@@ -1045,13 +846,6 @@ let raioxMarkers = [];
 let salesChartInstance = null;
 
 window.onload = function() {
-  // Salva o ID do usuário autenticado o mais cedo possível,
-  // pra garantir que donoId seja preenchido mesmo antes do currentProfile carregar.
-  if (typeof sb !== 'undefined') {
-    sb.auth.getUser().then(({ data }) => {
-      if (data && data.user) window._authUserId = data.user.id;
-    });
-  }
   renderDashboard();
   renderServices();
   renderProposals();
@@ -1060,7 +854,6 @@ window.onload = function() {
   populateRaioxSelect();
 };
 
-// ===================== NAVIGATION =====================
 function goTo(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -1093,7 +886,6 @@ function setSearchTab(tab, el) {
   document.getElementById('search-url-form').style.display = tab === 'url' ? 'block' : 'none';
 }
 
-// ===================== ANALYSIS =====================
 async function startAnalysis() {
   if(searchTab === 'name') {
     const name = document.getElementById('businessName').value.trim();
@@ -1144,13 +936,11 @@ async function startAnalysis() {
 }
 
 function parseGoogleMapsUrl(url) {
-  // URL longa: /maps/place/NOME/
   const longMatch = url.match(/google\.com\/maps\/place\/([^/@?&]+)/);
   if(longMatch && longMatch[1]) {
     const decoded = decodeURIComponent(longMatch[1].replace(/\+/g,' ')).replace(/\+/g,' ');
     if(decoded.length > 2 && !/^[A-Za-z0-9]{20,}$/.test(decoded)) return decoded;
   }
-  // Query param ?q=
   const qMatch = url.match(/[?&]q=([^&]+)/);
   if(qMatch) return decodeURIComponent(qMatch[1].replace(/\+/g,' '));
   return null;
@@ -1206,7 +996,6 @@ function buildAnalysis(place) {
     pillars: score.pillars,
     pillars_detail: score.pillars_detail || {},
     insights: score.insights,
-    // campos extras para score de otimização
     editorial_summary: place.editorial_summary || null,
     delivery: place.delivery || false,
     dine_in: place.dine_in || false,
@@ -1221,18 +1010,10 @@ function buildAnalysis(place) {
 function calculateScore(place) {
   const insights = { warnings: [], strengths: [], opportunities: [] };
   const pillars_detail = {};
-
-  // ── REPUTAÇÃO (max 25) ──────────────────────────────────────────
   const rating = place.rating || 0;
   const totalReviews = place.user_ratings_total || 0;
-
-  // Nota média (max 12) — RIGOROSO: sem nota = 0, nota baixa penaliza muito
   let notaPts = rating >= 4.9 ? 12 : rating >= 4.7 ? 10 : rating >= 4.5 ? 8 : rating >= 4.0 ? 5 : rating >= 3.5 ? 2 : rating > 0 ? 1 : 0;
-
-  // Volume de reviews (max 8) — RIGOROSO: menos de 10 reviews = quase zero
   let reviewPts = totalReviews >= 500 ? 8 : totalReviews >= 200 ? 7 : totalReviews >= 100 ? 6 : totalReviews >= 50 ? 4 : totalReviews >= 20 ? 2 : totalReviews >= 10 ? 1 : 0;
-
-  // Recência (max 5): usa reviews retornadas pela API
   let recenciaPts = 0, recenciaDesc = 'Sem avaliações';
   const reviews = place.reviews || [];
   if(reviews.length > 0) {
@@ -1247,75 +1028,50 @@ function calculateScore(place) {
   } else if(totalReviews > 0) {
     recenciaPts = 2; recenciaDesc = 'Dado não disponível via API';
   }
-
-  // PENALIDADE: nota < 4.0 penaliza reputação inteira em 30%
   let reputacaoRaw = Math.min(notaPts + reviewPts + recenciaPts, 25);
   if(rating > 0 && rating < 4.0) reputacaoRaw = Math.round(reputacaoRaw * 0.7);
   const reputacao = reputacaoRaw;
-
   pillars_detail.reputacao = [
     { name:'Nota média',       detail: rating > 0 ? rating.toFixed(1)+' ⭐' : 'Sem nota',      pts:notaPts,   max:12, ok: notaPts >= 8 },
     { name:'Volume de reviews',detail: totalReviews+' avaliações',                               pts:reviewPts, max:8,  ok: reviewPts >= 4 },
     { name:'Recência',         detail: recenciaDesc,                                              pts:recenciaPts, max:5, ok: recenciaPts >= 3 },
   ];
-
   if(rating >= 4.7) insights.strengths.push({ title:'Nota média: '+rating+' ⭐', desc:'Reputação excelente!', color:'success' });
   else if(rating >= 4.0) insights.opportunities.push({ title:'Nota média: '+rating+' ⭐', desc:'Razoável, mas pode melhorar.', action:'→ Implemente captação de avaliações com NFC/QR Code', color:'warning' });
   else if(rating < 4.0 && rating > 0) insights.warnings.push({ title:'Nota baixa: '+rating+' ⭐', desc:'Impacto: CRÍTICO — clientes evitam perfis com nota < 4.0.', action:'→ Responda avaliações negativas e implemente captação', color:'danger' });
   else insights.warnings.push({ title:'Sem avaliações', desc:'Impacto: CRÍTICO — perfil sem nota perde 60% dos cliques.', action:'→ Solicite avaliações imediatamente', color:'danger' });
-
   if(totalReviews >= 100) insights.strengths.push({ title:totalReviews+' avaliações', desc:'Forte prova social!', color:'success' });
   else if(totalReviews < 10) insights.warnings.push({ title:'Apenas '+totalReviews+' avaliações', desc:'Impacto: ALTO — poucos reviews eliminam credibilidade.', action:'→ Use NFC/QR Code para solicitar avaliações', color:'warning' });
   else if(totalReviews < 20) insights.warnings.push({ title:'Apenas '+totalReviews+' avaliações', desc:'Impacto: ALTO — poucos reviews reduzem autoridade.', action:'→ Use NFC/QR Code para solicitar avaliações', color:'warning' });
-
-  // ── AUTORIDADE DIGITAL (max 25) ──────────────────────────────────
   const hasWebsite = !!(place.website);
   const hasPhone   = !!(place.formatted_phone_number);
   const hasAddress = !!(place.formatted_address);
   const hasName    = !!(place.name);
-
-  // NAP agora é menos generoso — nome e endereço são básicos, só telefone soma extra
   let napPts = 0;
-  if(hasName)    napPts += 2;   // nome é o mínimo — pouco peso
-  if(hasAddress) napPts += 3;   // endereço é esperado — peso moderado
-  if(hasPhone)   napPts += 8;   // telefone é diferencial — peso alto (era 5)
+  if(hasName)    napPts += 2;
+  if(hasAddress) napPts += 3;
+  if(hasPhone)   napPts += 8;
   const napDesc = [hasName?'Nome':'—', hasAddress?'Endereço':'—', hasPhone?'Telefone':'—'].join(', ');
-
-  // Website (max 7 — era 5) — muito importante para autoridade
   const websitePts = hasWebsite ? 7 : 0;
-
-  // PageSpeed Mobile (max 5)
   const pagespeedPts = hasWebsite ? 2 : 0;
-
-  // PENALIDADE: sem telefone E sem site = -5 pts de autoridade
   const napPenalty = (!hasPhone && !hasWebsite) ? -5 : 0;
-
   const autoridadeDigital = Math.max(0, Math.min(napPts + websitePts + pagespeedPts + napPenalty, 25));
   pillars_detail.autoridade_digital = [
     { name:'Citações NAP',    detail: napDesc,                                                   pts:napPts,      max:13, ok: napPts >= 10 },
     { name:'Saúde do Website',detail: hasWebsite ? place.website.substring(0,30)+'...' : 'Sem website', pts:websitePts, max:7, ok: websitePts >= 7 },
     { name:'PageSpeed Mobile',detail: hasWebsite ? 'Website disponível' : 'Sem website',         pts:pagespeedPts, max:5, ok: pagespeedPts >= 4 },
   ];
-
   if(hasWebsite) insights.strengths.push({ title:'Website cadastrado', desc:'Aumenta autoridade digital.', color:'success' });
   else insights.opportunities.push({ title:'Sem website cadastrado', desc:'Impacto: MÉDIO — website aumenta autoridade local.', action:'→ Crie site focado em SEO local', color:'warning' });
-
-  // ── OTIMIZAÇÃO (max 20) ──────────────────────────────────────────
   const hasCategoria = !!(place.types && place.types.length > 0);
   const catPts    = hasCategoria ? 10 : 0;
   const secTypes  = place.types ? Math.max(0, place.types.length - 1) : 0;
   const secCatPts = secTypes >= 3 ? 5 : secTypes >= 1 ? 3 : 0;
-
-  // Descrição agora vale mais (era 3, agora 5) — é um campo importante
   const hasDesc   = !!(place.editorial_summary && place.editorial_summary.text);
   const descPts   = hasDesc ? 5 : 0;
-
-  // Atributos
   const attrFields = [place.delivery, place.dine_in, place.takeout, place.serves_beer, place.wheelchair_accessible_entrance, place.reservable, place.serves_breakfast, place.serves_lunch, place.serves_dinner];
   const attrCount = attrFields.filter(Boolean).length;
   const attrPts   = attrCount >= 3 ? 2 : attrCount >= 1 ? 1 : 0;
-
-  // PENALIDADE: sem categoria = perfil inutilizável para SEO local
   const otimizacao = Math.min(catPts + secCatPts + descPts + attrPts, 20);
   pillars_detail.otimizacao = [
     { name:'Categoria principal',    detail: hasCategoria ? formatCategory(place.types) : 'Não definida', pts:catPts,    max:10, ok: catPts >= 10 },
@@ -1323,22 +1079,15 @@ function calculateScore(place) {
     { name:'Descrição',              detail: hasDesc ? 'Preenchida' : 'Não preenchida',                   pts:descPts,   max:5,  ok: hasDesc },
     { name:'Atributos',              detail: attrCount+' atributos detectados',                           pts:attrPts,   max:2,  ok: attrPts >= 2 },
   ];
-
   const hasHours = !!(place.opening_hours);
   if(hasHours) insights.strengths.push({ title:'Horários cadastrados', desc:'Informações completas aumentam conversão.', color:'success' });
   else insights.warnings.push({ title:'Sem horários cadastrados', desc:'Impacto: ALTO — clientes não sabem quando visitar.', action:'→ Adicione horários de funcionamento completos', color:'danger' });
-
   if(!hasDesc) insights.warnings.push({ title:'Sem descrição do negócio', desc:'Impacto: MÉDIO — descrição melhora conversão e SEO local.', action:'→ Adicione uma descrição completa no GBP', color:'warning' });
-
-  // ── SAÚDE CADASTRAL (max 15) ─────────────────────────────────────
   const telPts  = hasPhone   ? 4 : 0;
   const endPts  = hasAddress ? 4 : 0;
   const sitePts = hasWebsite ? 4 : 0;
   const horaPts = hasHours   ? 3 : 0;
-
-  // PENALIDADE: sem horário E sem telefone = perfil muito incompleto
   const cadastralPenalty = (!hasHours && !hasPhone) ? -4 : 0;
-
   const saudeCadastral = Math.max(0, Math.min(telPts + endPts + sitePts + horaPts + cadastralPenalty, 15));
   pillars_detail.saude_cadastral = [
     { name:'Telefone', detail: hasPhone   ? place.formatted_phone_number : 'Não cadastrado', pts:telPts,  max:4, ok:hasPhone },
@@ -1346,50 +1095,35 @@ function calculateScore(place) {
     { name:'Website',  detail: hasWebsite ? 'Cadastrado'                 : 'Não cadastrado', pts:sitePts, max:4, ok:hasWebsite },
     { name:'Horários', detail: hasHours   ? 'Completos'                  : 'Não cadastrados',pts:horaPts, max:3, ok:hasHours },
   ];
-
   if(!hasPhone) insights.opportunities.push({ title:'Sem telefone cadastrado', desc:'Impacto: ALTO — dificulta contato direto e reduz pontuação.', action:'→ Adicione telefone e WhatsApp', color:'warning' });
-
-  // ── MÍDIA (max 15) ────────────────────────────────────────────────
   const photoRefs = (place.photos || []).length;
   const apiMaxPhotos = photoRefs >= 10;
-
   let volumePts = 0, volumeDesc = '';
   if(apiMaxPhotos) {
     volumePts = 9;
     volumeDesc = '10+ fotos (limite da API — perfil tem mais)';
   } else if(photoRefs >= 7) { volumePts = 7; volumeDesc = photoRefs+' fotos'; }
   else if(photoRefs >= 4)   { volumePts = 5; volumeDesc = photoRefs+' fotos'; }
-  else if(photoRefs >= 1)   { volumePts = 2; volumeDesc = photoRefs+' fotos'; } // era 3, penalizei mais
+  else if(photoRefs >= 1)   { volumePts = 2; volumeDesc = photoRefs+' fotos'; }
   else                      { volumePts = 0; volumeDesc = 'Sem fotos detectadas'; }
-
   const tour360Pts = 0;
   const midia = Math.min(volumePts + tour360Pts, 15);
   pillars_detail.midia = [
     { name:'Volume de Mídia', detail: volumeDesc,                pts:volumePts, max:11, ok: volumePts >= 7 },
     { name:'Tour 360°',       detail:'Não detectável via API',   pts:0,         max:4,  ok: false },
   ];
-
   if(photoRefs >= 7 || apiMaxPhotos) insights.strengths.push({ title:(apiMaxPhotos?'10+':photoRefs)+' fotos no perfil', desc:'Boa presença visual!', color:'success' });
   else if(photoRefs >= 1) insights.warnings.push({ title:'Poucas fotos ('+photoRefs+' detectadas)', desc:'Impacto: ALTO — mais fotos aumentam engajamento.', action:'→ Publique pelo menos 20 fotos profissionais', color:'warning' });
   else insights.warnings.push({ title:'Sem fotos detectadas', desc:'Impacto: CRÍTICO — perfil sem fotos perde 40% dos cliques.', action:'→ Adicione fotos imediatamente', color:'danger' });
-
-  // ── TOTAL com teto para perfis incompletos ────────────────────────
   let total = reputacao + autoridadeDigital + otimizacao + saudeCadastral + midia;
-
-  // REGRA DE TETO: perfis sem elementos essenciais não passam de 50
   const missingEssentials = [];
   if(rating === 0 || totalReviews < 5) missingEssentials.push('sem avaliações');
   if(!hasPhone)   missingEssentials.push('sem telefone');
   if(!hasHours)   missingEssentials.push('sem horários');
   if(photoRefs === 0) missingEssentials.push('sem fotos');
-
-  // 3+ itens essenciais faltando: teto 40
-  // 2 itens essenciais faltando: teto 50
-  // 1 item essencial faltando: teto 65
   if(missingEssentials.length >= 3)      total = Math.min(total, 40);
   else if(missingEssentials.length >= 2) total = Math.min(total, 50);
   else if(missingEssentials.length >= 1) total = Math.min(total, 65);
-
   return {
     total,
     pillars: {
@@ -1436,30 +1170,18 @@ function getScoreColor(score) {
 
 function buildGaugeSVG(score) {
   const s = Math.max(0, Math.min(100, score));
-
-  // Cores por faixa
   const color = s < 31 ? '#ef4444' : s < 60 ? '#f97316' : s < 80 ? '#eab308' : '#22c55e';
   const label = s < 31 ? 'CRÍTICO' : s < 60 ? 'FRACO' : s < 80 ? 'BOM' : 'EXCELENTE';
   const labelColor = s < 31 ? '#ef4444' : s < 60 ? '#f97316' : s < 80 ? '#eab308' : '#22c55e';
-
-  // Geometria do semicírculo: centro (160,155), raio 120
   const cx = 160, cy = 155, R = 120, SW = 22;
-  const startAngle = Math.PI;       // 180° — esquerda
-  const endAngle   = 0;             // 0°   — direita
-  const fillAngle  = Math.PI * (1 - s / 100); // quanto falta (de 180° indo para 0°)
-
-  // Ponto inicial (esquerda)
+  const startAngle = Math.PI;
+  const endAngle   = 0;
+  const fillAngle  = Math.PI * (1 - s / 100);
   const x0 = cx + R * Math.cos(startAngle), y0 = cy + R * Math.sin(startAngle);
-  // Ponto final do arco preenchido
   const xFill = cx + R * Math.cos(fillAngle), yFill = cy + R * Math.sin(fillAngle);
-  // Arco completo (fundo)
   const xEnd = cx + R * Math.cos(endAngle), yEnd = cy + R * Math.sin(endAngle);
-
-  // large-arc-flag para o arco preenchido
   const fillDeg = s / 100 * 180;
   const largeArc = fillDeg > 180 ? 1 : 0;
-
-  // Marcadores de ticks e labels
   let ticks = '';
   const tickLabels = [0, 25, 50, 75, 100];
   for (let i = 0; i <= 8; i++) {
@@ -1471,17 +1193,13 @@ function buildGaugeSVG(score) {
     const xi2 = cx + ro * Math.cos(a), yi2 = cy + ro * Math.sin(a);
     ticks += `<line x1="${xi1.toFixed(1)}" y1="${yi1.toFixed(1)}" x2="${xi2.toFixed(1)}" y2="${yi2.toFixed(1)}" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>`;
   }
-  // Labels principais
   const labelData = [{v:0,a:Math.PI},{v:25,a:Math.PI*0.75},{v:50,a:Math.PI*0.5},{v:75,a:Math.PI*0.25},{v:100,a:0}];
   for (const ld of labelData) {
     const rl = R + SW/2 + 24;
     const xl = cx + rl * Math.cos(ld.a), yl = cy + rl * Math.sin(ld.a);
     ticks += `<text x="${xl.toFixed(1)}" y="${yl.toFixed(1)}" font-size="10" fill="rgba(255,255,255,0.45)" text-anchor="middle" dominant-baseline="middle" font-family="Inter,sans-serif">${ld.v}</text>`;
   }
-
-  // Gradiente para o arco preenchido baseado no score
   const gradId = 'gGrad_' + Math.round(s);
-
   return `<svg viewBox="0 0 320 195" style="max-width:320px;width:100%;" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -1495,36 +1213,26 @@ function buildGaugeSVG(score) {
       <path d="M ${x0.toFixed(2)} ${y0.toFixed(2)} A ${R} ${R} 0 ${largeArc} 1 ${xFill.toFixed(2)} ${yFill.toFixed(2)}" fill="none" stroke="black" stroke-width="${SW + 2}" stroke-linecap="round"/>
     </clipPath>
   </defs>
-
-  <!-- Arco de fundo (cinza) -->
   <path d="M ${x0.toFixed(2)} ${y0.toFixed(2)} A ${R} ${R} 0 0 1 ${xEnd.toFixed(2)} ${yEnd.toFixed(2)}"
     fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="${SW}" stroke-linecap="round"/>
-
-  <!-- Arco preenchido com gradiente total recortado pelo progresso -->
   <path d="M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${cx + R} ${cy}"
     fill="none" stroke="url(#${gradId})" stroke-width="${SW}" stroke-linecap="round"
     stroke-dasharray="${(s / 100 * Math.PI * R).toFixed(2)} ${(Math.PI * R).toFixed(2)}"
     pathLength="${(Math.PI * R).toFixed(2)}"
     stroke-dashoffset="0"/>
-
-  <!-- Ticks e labels -->
   ${ticks}
-
-  <!-- Score central -->
   <text x="${cx}" y="${cy + 10}" text-anchor="middle" font-size="52" font-weight="800" fill="${color}" font-family="Inter,sans-serif">${Math.round(s)}</text>
   <text x="${cx}" y="${cy + 32}" text-anchor="middle" font-size="11" fill="rgba(255,255,255,0.4)" font-family="Inter,sans-serif" letter-spacing="3">SCORE</text>
   <text x="${cx}" y="${cy + 50}" text-anchor="middle" font-size="12" font-weight="700" fill="${labelColor}" font-family="Inter,sans-serif">${label}</text>
 </svg>`;
 }
 
-// ===================== RENDER RESULT =====================
 function renderResult(a) {
   const photoUrl = a.photos && a.photos.length > 0
     ? `/api/places?action=photo&ref=${a.photos[0].photo_reference}&maxwidth=600`
     : null;
   const starsHtml = '★'.repeat(Math.round(a.rating)) + '☆'.repeat(5-Math.round(a.rating));
   const sectorAvg = { reputacao:16, autoridade_digital:14, otimizacao:15, saude_cadastral:11, midia:9 };
-
   document.getElementById('resultado-content').innerHTML = `
     <div style="max-width:1100px;margin:0 auto;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
@@ -1535,7 +1243,6 @@ function renderResult(a) {
           <button class="btn btn-primary" onclick="generateProposalFromAnalysis(${a.id})">✨ Gerar Proposta</button>
         </div>
       </div>
-
       <div class="profile-header">
         <div style="position:relative;">
           ${photoUrl ? `<img src="${photoUrl}" style="width:100%;height:220px;object-fit:cover;border-radius:var(--radius);" onerror="this.style.display='none'">` : `<div style="width:100%;height:220px;background:var(--bg3);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:50px;">🏢</div>`}
@@ -1554,13 +1261,11 @@ function renderResult(a) {
           <button class="btn btn-danger" style="margin-top:10px;font-size:11px;" onclick="deleteAnalysis(${a.id})">🗑 Excluir Análise</button>
         </div>
       </div>
-
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
         <div class="card" style="text-align:center;">
           <div style="font-size:16px;font-weight:600;margin-bottom:4px;">${a.name}</div>
           <div style="font-size:12px;color:var(--text2);margin-bottom:16px;">${a.category}</div>
           ${buildGaugeSVG(a.score)}
-
           <div style="display:flex;justify-content:center;gap:14px;margin-top:10px;font-size:11px;flex-wrap:wrap;">
             <span><span style="color:#ef4444">●</span> 0-30 Crítico</span>
             <span><span style="color:#f97316">●</span> 31-59 Fraco</span>
@@ -1584,7 +1289,6 @@ function renderResult(a) {
           <div style="position:relative;height:260px;"><canvas id="radarChart"></canvas></div>
         </div>
       </div>
-
       <div class="pillar-grid" style="margin-bottom:20px;">
         ${renderPillarCard('⭐','REPUTAÇÃO',a.pillars.reputacao,'reputacao',a.pillars_detail)}
         ${renderPillarCard('🌐','AUTORIDADE DIGITAL',a.pillars.autoridade_digital,'autoridade_digital',a.pillars_detail)}
@@ -1592,7 +1296,6 @@ function renderResult(a) {
         ${renderPillarCard('📋','SAÚDE CADASTRAL',a.pillars.saude_cadastral,'saude_cadastral',a.pillars_detail)}
         ${renderPillarCard('📸','MÍDIA',a.pillars.midia,'midia',a.pillars_detail)}
       </div>
-
       <div class="card" style="margin-bottom:20px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
           <div style="font-size:16px;font-weight:600;">📊 Comparação com o Setor</div>
@@ -1601,7 +1304,6 @@ function renderResult(a) {
         <div style="font-size:12px;color:var(--text2);margin-bottom:16px;">Como você se compara à média de ${a.category}</div>
         ${buildComparisonBars(a, sectorAvg)}
       </div>
-
       <div class="card" style="margin-bottom:20px;">
         <div style="font-size:20px;font-weight:700;margin-bottom:4px;text-align:center;">💡 Insights Automáticos</div>
         <div style="font-size:13px;color:var(--text2);text-align:center;margin-bottom:20px;">Análise inteligente do seu perfil</div>
@@ -1610,7 +1312,6 @@ function renderResult(a) {
           <button class="btn btn-primary" onclick="generateAIInsights(${a.id})" style="width:100%;">🤖 Gerar Análise Completa com IA</button>
         </div>
       </div>
-
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px;">
         <div class="card">
           <div style="font-size:13px;font-weight:600;margin-bottom:12px;">📱 QR CODE</div>
@@ -1637,7 +1338,6 @@ function renderResult(a) {
           </div>
         </div>
       </div>
-
       ${a.reviews && a.reviews.length > 0 ? `
       <div class="card" style="margin-bottom:20px;">
         <div style="font-size:16px;font-weight:600;margin-bottom:16px;">💬 Avaliações Recentes</div>
@@ -1653,7 +1353,6 @@ function renderResult(a) {
       </div>` : ''}
     </div>
   `;
-
   setTimeout(() => {
     const qrEl = document.getElementById(`qr-canvas-${a.id}`);
     if(qrEl && a.url) {
@@ -1757,7 +1456,6 @@ function renderInsights(a) {
   return html || '<div style="color:var(--text2);text-align:center;padding:20px">Nenhum insight disponível</div>';
 }
 
-// ===================== CHARTS =====================
 function initRadarChart(a) {
   const canvas = document.getElementById('radarChart');
   if(!canvas) return;
@@ -1783,7 +1481,6 @@ function initScoreHistoryChart(a) {
   });
 }
 
-// ===================== AI INSIGHTS =====================
 async function generateAIInsights(analysisId) {
   const a = analyses.find(x => x.id === analysisId);
   if(!a) return;
@@ -1802,7 +1499,6 @@ async function generateAIInsights(analysisId) {
   }
 }
 
-// ===================== DASHBOARD =====================
 function renderDashboard() {
   const count = analyses.length;
   document.getElementById('dashAnalysisCount').textContent = count + ' perfis analisados';
@@ -1838,7 +1534,6 @@ function setSortOrder(order, el) { sortOrder = order; document.querySelectorAll(
 function viewAnalysis(id) { const a = analyses.find(x => x.id === id); if(!a) return; currentAnalysis = a; renderResult(a); goTo('resultado'); }
 function deleteAnalysis(id) { if(!confirm('Excluir esta análise?')) return; analyses = analyses.filter(a => a.id !== id); saveAnalyses(); goTo('dashboard'); }
 
-// ===================== QR CODE =====================
 function switchQR(type, id) {
   const a = analyses.find(x => x.id === parseInt(id));
   if(!a) return;
@@ -1856,7 +1551,6 @@ function downloadQR(id) {
   a2.download = 'qrcode.png'; a2.href = el.toDataURL(); a2.click();
 }
 
-// ===================== GEOGRID =====================
 function updateGridCost() { const g = parseInt(document.getElementById('ggGrid').value); document.getElementById('ggCost').textContent = (g*g) + ' requisições'; }
 
 function initGeoGridMap() {
@@ -1923,7 +1617,6 @@ async function generateGeogridAIAnalysis(results, keyword, name) {
   } catch(e) {}
 }
 
-// ===================== RAIO-X =====================
 function initRaioxMap() {
   if(raioxMap) return;
   const el = document.getElementById('raioxMap');
@@ -1977,7 +1670,6 @@ function focusCompetitor(lat, lng) { if(raioxMap && lat && lng) raioxMap.setView
 function filterCompetitors(q) { document.querySelectorAll('.competitor-item').forEach(item => { const name = item.querySelector('.comp-name')?.textContent?.toLowerCase() || ''; item.style.display = name.includes(q.toLowerCase()) ? 'flex' : 'none'; }); }
 function setRadius(km, btn) { document.querySelectorAll('.map-radius-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); const id = document.getElementById('raioxAnalysisSelect').value; if(id) loadRaioxForAnalysis(id); }
 
-// ===================== CRM =====================
 function setCrmView(view, btn) {
   crmView = view;
   document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
@@ -2061,7 +1753,6 @@ function populateCrmMapMarkers() {
   crmLeads.forEach(lead => { if(lead.lat && lead.lng) { const color = lead.stage==='fechado_ganho'?'#22c55e':lead.stage==='perdido'?'#ef4444':lead.stage==='proposta'?'#f59e0b':'#3b82f6'; L.circleMarker([lead.lat, lead.lng], { radius:10, fillColor:color, color:'white', weight:2, fillOpacity:.9 }).bindPopup(`<strong>${lead.name}</strong><br>R$ ${(lead.value||0).toLocaleString('pt-BR')}`).addTo(crmMapInstance); } });
 }
 
-// ===================== SERVICES =====================
 function getDefaultServices() {
   return [
     { id:'reputacao', name:'Reputação', icon:'⭐', desc:'O motor de confiança. Foco em prova social e autoridade local.', items:[
@@ -2103,7 +1794,6 @@ function editService(itemId) { for(const section of services) { const item = sec
 function deleteService(sectionId, itemId) { if(!confirm('Excluir?')) return; const section = services.find(s => s.id === sectionId); if(section) { section.items = section.items.filter(i => i.id !== itemId); saveServices(); renderServices(); } }
 function resetServices() { if(confirm('Resetar para padrão?')) { services = getDefaultServices(); saveServices(); renderServices(); } }
 
-// ===================== PROPOSALS =====================
 function renderProposals() {
   const list = document.getElementById('proposalsList'); const none = document.getElementById('noProposals');
   if(!list || !none) return;
@@ -2128,19 +1818,21 @@ function generateNewProposal() { if(analyses.length === 0) { alert('Faça pelo m
 function viewProposal(id) { const p = proposals.find(x => x.id === id); if(!p) return; const win = window.open('', '_blank'); win.document.write(`<html><head><title>Proposta — ${p.name}</title><style>body{font-family:sans-serif;max-width:700px;margin:40px auto;line-height:1.7;color:#333;}h1{color:#2563eb;}</style></head><body><h1>Proposta Comercial</h1><h2>${p.name}</h2><p style="white-space:pre-line">${p.text}</p></body></html>`); }
 function deleteProposal(id) { if(!confirm('Excluir proposta?')) return; proposals = proposals.filter(p => p.id !== id); saveProposals(); renderProposals(); }
 
-// ===================== MISC =====================
 function exportPDF() { window.print(); }
 function showPillarDetail(name) {}
 function setCrmPeriod(p, el) { document.querySelectorAll('#crm-metrics .filter-tab').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
 function toggleDarkMode() {}
 
 // ===================== STORAGE =====================
-function saveAnalyses() { localStorage.setItem('gbp_analyses', JSON.stringify(analyses)); if(typeof enviarParaSupabase==='function') enviarParaSupabase('analyses'); }
-function saveServices() { localStorage.setItem('gbp_services', JSON.stringify(services)); if(typeof enviarParaSupabase==='function') enviarParaSupabase('services'); }
-function saveProposals() { localStorage.setItem('gbp_proposals', JSON.stringify(proposals)); if(typeof enviarParaSupabase==='function') enviarParaSupabase('proposals'); }
-function saveCrm() { localStorage.setItem('gbp_crm', JSON.stringify(crmLeads)); if(typeof enviarParaSupabase==='function') enviarParaSupabase('crmLeads'); }
+// Agora TODAS as gravações esperam (await) a confirmação do Supabase antes
+// de liberar a tela. Isso é o que evita que um refresh de página, ou o
+// logout/login, tragam de volta dados antigos que ainda não tinham
+// terminado de ser salvos no servidor.
+async function saveAnalyses() { localStorage.setItem('gbp_analyses', JSON.stringify(analyses)); if(typeof enviarParaSupabase==='function') await enviarParaSupabase('analyses'); }
+async function saveServices() { localStorage.setItem('gbp_services', JSON.stringify(services)); if(typeof enviarParaSupabase==='function') await enviarParaSupabase('services'); }
+async function saveProposals() { localStorage.setItem('gbp_proposals', JSON.stringify(proposals)); if(typeof enviarParaSupabase==='function') await enviarParaSupabase('proposals'); }
+async function saveCrm() { localStorage.setItem('gbp_crm', JSON.stringify(crmLeads)); if(typeof enviarParaSupabase==='function') await enviarParaSupabase('crmLeads'); }
 
-// ===================== LOADING =====================
 function showLoading(msg) { document.getElementById('loadingText').textContent = msg || 'Carregando...'; document.getElementById('loadingOverlay').style.display = 'flex'; }
 function updateLoading(msg) { document.getElementById('loadingText').textContent = msg; }
 function hideLoading() { document.getElementById('loadingOverlay').style.display = 'none'; }
@@ -2148,10 +1840,13 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 // ===================== PROSPECÇÃO =====================
 let leadsProsp = JSON.parse(localStorage.getItem('localway_leads_prosp') || '[]');
+let leadsLixeira = JSON.parse(localStorage.getItem('localway_leads_lixeira') || '[]');
 let pitchLeadAtual = null;
 let pitchTipoAtual = 'abordagem';
 
+// Mesma lógica: espera o Supabase confirmar antes de seguir em frente.
 async function salvarLeadsProsp() { localStorage.setItem('localway_leads_prosp', JSON.stringify(leadsProsp)); if(typeof enviarParaSupabase==='function') await enviarParaSupabase('leadsProsp'); }
+async function salvarLixeiraProsp() { localStorage.setItem('localway_leads_lixeira', JSON.stringify(leadsLixeira)); if(typeof enviarParaSupabase==='function') await enviarParaSupabase('leadsLixeira'); }
 
 function getProspConfig() {
   return {
@@ -2196,17 +1891,31 @@ async function executarGerarLeads() {
   showLoading('Buscando ' + segmento + ' em ' + bairro + '...');
 
   try {
-    // Usa proxy do servidor pra evitar bloqueio de CORS da Places API (New)
-    const query = encodeURIComponent(segmento + ' em ' + bairro);
-    const resp = await fetch(`/api/places?action=leads&query=${query}&max=${qtd}`);
+    const query = segmento + ' em ' + bairro;
+    const fieldMask = [
+      'places.id','places.displayName','places.formattedAddress',
+      'places.googleMapsUri','places.nationalPhoneNumber','places.internationalPhoneNumber',
+      'places.websiteUri','places.rating','places.userRatingCount',
+      'places.photos','places.currentOpeningHours','places.regularOpeningHours',
+      'places.priceLevel','places.primaryTypeDisplayName','places.businessStatus'
+    ].join(',');
 
-    if (!resp.ok) throw new Error('Erro no servidor: ' + resp.status);
+    const resp = await fetch('https://places.googleapis.com/v1/places:searchText', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': cfg.googleKey,
+        'X-Goog-FieldMask': fieldMask
+      },
+      body: JSON.stringify({ textQuery: query, languageCode: 'pt-BR', regionCode: 'BR', maxResultCount: 20 })
+    });
+
     const data = await resp.json();
-    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+    if (data.error) throw new Error(data.error.message);
 
     const places = data.places || [];
     let adicionados = 0;
-    const idsExistentes = new Set(leadsProsp.map(l => l.id));
+    const idsExistentes = new Set([...leadsProsp.map(l => l.id), ...leadsLixeira.map(l => l.id)]);
 
     for (const p of places) {
       if (adicionados >= qtd) break;
@@ -2222,7 +1931,6 @@ async function executarGerarLeads() {
       const perfil       = calcularPerfilProsp(nota, avaliacoes, temSite, fotos);
       const oportunidade = temSite ? 'Tem site mas mal posicionado' : 'Sem site + pouco engajamento';
 
-      // horário
       let horario = '', abertoAgora = 'Desconhecido';
       const oh = p.currentOpeningHours || p.regularOpeningHours;
       if (oh) {
@@ -2257,25 +1965,25 @@ async function executarGerarLeads() {
         dataReuniao: '',
         obsReuniao:  '',
         dataAdicionado: new Date().toLocaleDateString('pt-BR'),
-        donoId:      (window.currentProfile && window.currentProfile.id) ? window.currentProfile.id : (window._authUserId || null),
+        donoId:      window.currentProfile ? window.currentProfile.id : null,
         donoNome:    window.currentProfile ? (window.currentProfile.nome || window.currentProfile.email) : ''
       });
       adicionados++;
     }
 
+    // Atualiza a tela e SÓ DEPOIS espera o servidor confirmar. Isso resolve
+    // o bug de leads recém-gerados sumirem se a página for atualizada logo
+    // em seguida: agora o loading fica visível até a gravação terminar.
+    renderLeadsProsp();
+    atualizarStatsProsp();
+    updateLoading('Salvando ' + adicionados + ' lead(s) no servidor...');
+    await salvarLeadsProsp();
     hideLoading();
-    if (adicionados === 0) {
-      alert('⚠️ Nenhum lead novo encontrado.\n\nMotivos possíveis:\n- Todos os resultados já estão na lista\n- Nenhuma empresa encontrada nessa região\n- Verifique se a API Key está correta em ⚙️ Configurar API');
-    } else {
-      await salvarLeadsProsp();
-      renderLeadsProsp();
-      atualizarStatsProsp();
-      alert('✅ ' + adicionados + ' leads adicionados!\n\n🟢 Fraco: ' + leadsProsp.filter(l=>l.perfil==='Fraco (bom lead)').length + '\n🟡 Médio: ' + leadsProsp.filter(l=>l.perfil==='Médio').length);
-    }
+    alert('✅ ' + adicionados + ' leads adicionados!\n\n🟢 Fraco: ' + leadsProsp.filter(l=>l.perfil==='Fraco (bom lead)').length + '\n🟡 Médio: ' + leadsProsp.filter(l=>l.perfil==='Médio').length);
 
   } catch(e) {
     hideLoading();
-    alert('Erro ao buscar leads: ' + e.message + '\n\nSe o erro persistir, verifique se a Google API Key está configurada corretamente em ⚙️ Configurar API.');
+    alert('Erro ao buscar leads: ' + e.message);
   }
 }
 
@@ -2291,11 +1999,12 @@ function calcularPerfilProsp(nota, avaliacoes, temSite, fotos) {
 }
 
 function atualizarStatsProsp() {
-  const lista = getLeadsFiltrados();
   document.getElementById('ps-total').textContent   = leadsProsp.length;
   document.getElementById('ps-fraco').textContent   = leadsProsp.filter(l=>l.perfil==='Fraco (bom lead)').length;
   document.getElementById('ps-medio').textContent   = leadsProsp.filter(l=>l.perfil==='Médio').length;
   document.getElementById('ps-reuniao').textContent = leadsProsp.filter(l=>l.status==='Reunião marcada').length;
+  const lixEl = document.getElementById('lixeira-count');
+  if (lixEl) lixEl.textContent = leadsLixeira.length;
 }
 
 function getLeadsFiltrados() {
@@ -2306,11 +2015,7 @@ function getLeadsFiltrados() {
   const isAdmin = window.currentProfile && window.currentProfile.role === 'admin';
   const meuId   = window.currentProfile ? window.currentProfile.id : null;
   return leadsProsp.filter(l => {
-    // Se o perfil ainda não carregou (meuId null), mostra tudo pra não sumir leads.
-    // Admin sempre vê tudo.
-    // Leads sem donoId são legados e visíveis pra todos.
-    // Leads com donoId só aparecem pro dono.
-    if (meuId && !isAdmin && l.donoId && l.donoId !== meuId) return false;
+    if (!isAdmin && l.donoId && l.donoId !== meuId) return false;
     if (q && !l.empresa.toLowerCase().includes(q) && !l.segmento.toLowerCase().includes(q) && !l.bairro.toLowerCase().includes(q)) return false;
     if (perfil && l.perfil !== perfil) return false;
     if (site   && l.temSite !== site)  return false;
@@ -2331,16 +2036,13 @@ function renderLeadsProsp() {
 
   const perfilCor = { 'Fraco (bom lead)':'var(--green2)', 'Médio':'var(--yellow2)', 'Forte (já bem otimizado)':'var(--red2)' };
   const statusCor = { 'Não contatado':'#6e7681', 'Não atendeu':'#8b949e', 'Reunião marcada':'var(--green2)', 'Retornar':'var(--yellow2)', 'Sem interesse':'var(--red2)', 'Fechado':'var(--blue2)' };
-  const statusOpts = ['Não contatado','Não atendeu','Reunião marcada','Retornar','Sem interesse','Fechado'].map(s => `<option value="${s}">${s}</option>`).join('');
 
-  // Mobile: cards / Desktop: tabela
   const isMobile = window.innerWidth < 768;
 
   if (isMobile) {
-    cont.innerHTML = lista.map((l, i) => {
+    cont.innerHTML = lista.map((l) => {
       const idx = leadsProsp.indexOf(l);
       const pc  = perfilCor[l.perfil] || 'var(--text2)';
-      const sc  = statusCor[l.status] || 'var(--text2)';
       return `<div class="card" style="margin-bottom:10px;padding:14px;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
           <div>
@@ -2366,7 +2068,7 @@ function renderLeadsProsp() {
             ${['Não contatado','Não atendeu','Reunião marcada','Retornar','Sem interesse','Fechado'].map(s=>`<option ${l.status===s?'selected':''}>${s}</option>`).join('')}
           </select>
           <button onclick="enviarProspCRM(${idx})" class="btn btn-secondary" style="font-size:11px;padding:6px 10px;" title="Enviar pro CRM">📊</button>
-          <button onclick="deletarLeadProsp(${idx})" class="btn btn-danger" style="font-size:11px;padding:6px 10px;" title="Excluir">🗑</button>
+          <button onclick="deletarLeadProsp(${idx})" class="btn btn-danger" style="font-size:11px;padding:6px 10px;" title="Mover para lixeira">🗑</button>
         </div>
       </div>`;
     }).join('');
@@ -2422,7 +2124,7 @@ function renderLeadsProsp() {
               <div style="display:flex;gap:4px;justify-content:center;">
                 <button onclick="abrirPitch(${idx})" class="btn btn-primary" style="font-size:11px;padding:5px 10px;" title="Gerar Pitch IA">🤖</button>
                 <button onclick="enviarProspCRM(${idx})" class="btn btn-secondary" style="font-size:11px;padding:5px 10px;" title="Enviar pro CRM">📊</button>
-                <button onclick="deletarLeadProsp(${idx})" class="btn btn-danger" style="font-size:11px;padding:5px 8px;" title="Excluir">🗑</button>
+                <button onclick="deletarLeadProsp(${idx})" class="btn btn-danger" style="font-size:11px;padding:5px 8px;" title="Mover para lixeira">🗑</button>
               </div>
             </td>
           </tr>`;
@@ -2434,12 +2136,12 @@ function renderLeadsProsp() {
 
 async function alterarStatusProsp(idx, novoStatus) {
   leadsProsp[idx].status = novoStatus;
-  await salvarLeadsProsp();
   atualizarStatsProsp();
   if (novoStatus === 'Reunião marcada') {
     abrirModalReuniao(idx);
   }
   renderLeadsProsp();
+  await salvarLeadsProsp();
 }
 
 function parsarDataProsp(input) {
@@ -2456,27 +2158,153 @@ function formatarDataGcal(date) {
   return `${date.getFullYear()}${pad(date.getMonth()+1)}${pad(date.getDate())}T${pad(date.getHours())}${pad(date.getMinutes())}00`;
 }
 
+// ---- EXCLUSÃO (agora move pra LIXEIRA, não apaga de vez) ----
 async function deletarLeadProsp(idx) {
-  if (!confirm('Excluir este lead?')) return;
-  leadsProsp.splice(idx, 1);
-  await salvarLeadsProsp();
+  if (!confirm('Mover este lead para a lixeira?')) return;
+  const [lead] = leadsProsp.splice(idx, 1);
+  lead.excluidoEm = new Date().toISOString();
+  leadsLixeira.unshift(lead);
   renderLeadsProsp();
   atualizarStatsProsp();
+  showLoading('Movendo para a lixeira...');
+  await salvarLeadsProsp();
+  await salvarLixeiraProsp();
+  hideLoading();
 }
 
 async function limparLeadsProsp() {
-  if (!confirm('Limpar TODOS os leads? Isso não pode ser desfeito.')) return;
+  if (leadsProsp.length === 0) { alert('Não há leads pra mover.'); return; }
+  if (!confirm('Mover TODOS os leads para a lixeira?')) return;
+  const agora = new Date().toISOString();
+  leadsProsp.forEach(l => l.excluidoEm = agora);
+  leadsLixeira = [...leadsProsp, ...leadsLixeira];
   leadsProsp = [];
-  await salvarLeadsProsp();
   renderLeadsProsp();
   atualizarStatsProsp();
+  showLoading('Movendo leads para a lixeira...');
+  await salvarLeadsProsp();
+  await salvarLixeiraProsp();
+  hideLoading();
+  alert('✅ Leads movidos para a lixeira.');
 }
 
-function enviarProspCRM(idx) {
+function parseDataBR(str) {
+  if (!str) return null;
+  const [d, m, y] = str.split('/').map(Number);
+  if (!d || !m || !y) return null;
+  return new Date(y, m - 1, d);
+}
+
+async function excluirLeadsPorPeriodo(modo) {
+  let de, ate;
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+
+  if (modo === 'hoje') {
+    de = new Date(hoje); ate = new Date(hoje);
+  } else if (modo === 'semana') {
+    const diaSemana = hoje.getDay();
+    const diff = (diaSemana === 0 ? -6 : 1) - diaSemana;
+    de = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + diff);
+    ate = new Date(hoje);
+  } else if (modo === 'mes') {
+    de = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    ate = new Date(hoje);
+  } else {
+    const deVal = document.getElementById('prosp-del-de')?.value;
+    const ateVal = document.getElementById('prosp-del-ate')?.value;
+    if (!deVal || !ateVal) { alert('Escolha as duas datas (de/até) antes de mover por período.'); return; }
+    de = new Date(deVal + 'T00:00:00');
+    ate = new Date(ateVal + 'T00:00:00');
+  }
+  ate.setHours(23,59,59,999);
+
+  const alvo = leadsProsp.filter(l => {
+    const d = parseDataBR((l.dataAdicionado || '').split(' ')[0]);
+    return d && d >= de && d <= ate;
+  });
+
+  if (alvo.length === 0) { alert('Nenhum lead encontrado nesse período.'); return; }
+  if (!confirm(`Mover ${alvo.length} lead(s) adicionados entre ${de.toLocaleDateString('pt-BR')} e ${ate.toLocaleDateString('pt-BR')} para a lixeira?`)) return;
+
+  const agora = new Date().toISOString();
+  alvo.forEach(l => l.excluidoEm = agora);
+  leadsLixeira = [...alvo, ...leadsLixeira];
+  leadsProsp = leadsProsp.filter(l => !alvo.includes(l));
+  renderLeadsProsp();
+  atualizarStatsProsp();
+  showLoading('Movendo leads do período para a lixeira...');
+  await salvarLeadsProsp();
+  await salvarLixeiraProsp();
+  hideLoading();
+}
+
+// ---- LIXEIRA ----
+function abrirLixeira() {
+  renderLixeira();
+  document.getElementById('modal-lixeira').style.display = 'flex';
+}
+function fecharLixeira() { document.getElementById('modal-lixeira').style.display = 'none'; }
+
+function renderLixeira() {
+  const cont = document.getElementById('lixeira-lista');
+  if (!cont) return;
+  if (leadsLixeira.length === 0) {
+    cont.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text2);">Lixeira vazia</div>';
+    return;
+  }
+  cont.innerHTML = leadsLixeira.map((l, idx) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border);gap:10px;">
+      <div style="min-width:0;">
+        <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${l.empresa}</div>
+        <div style="font-size:11px;color:var(--text2);">${l.segmento} · excluído em ${new Date(l.excluidoEm).toLocaleDateString('pt-BR')}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;">
+        <button class="btn btn-secondary" style="font-size:11px;padding:5px 10px;" onclick="restaurarLeadLixeira(${idx})">↺ Restaurar</button>
+        <button class="btn btn-danger" style="font-size:11px;padding:5px 10px;" onclick="excluirPermanente(${idx})">🗑 De vez</button>
+      </div>
+    </div>`).join('');
+}
+
+async function restaurarLeadLixeira(idx) {
+  const [lead] = leadsLixeira.splice(idx, 1);
+  delete lead.excluidoEm;
+  leadsProsp.unshift(lead);
+  renderLixeira();
+  renderLeadsProsp();
+  atualizarStatsProsp();
+  showLoading('Restaurando lead...');
+  await salvarLeadsProsp();
+  await salvarLixeiraProsp();
+  hideLoading();
+}
+
+async function excluirPermanente(idx) {
+  if (!confirm('Excluir PERMANENTEMENTE este lead? Não pode ser desfeito.')) return;
+  leadsLixeira.splice(idx, 1);
+  renderLixeira();
+  atualizarStatsProsp();
+  showLoading('Excluindo permanentemente...');
+  await salvarLixeiraProsp();
+  hideLoading();
+}
+
+async function esvaziarLixeira() {
+  if (leadsLixeira.length === 0) return;
+  if (!confirm(`Excluir PERMANENTEMENTE os ${leadsLixeira.length} lead(s) da lixeira? Não pode ser desfeito.`)) return;
+  leadsLixeira = [];
+  renderLixeira();
+  atualizarStatsProsp();
+  showLoading('Esvaziando lixeira...');
+  await salvarLixeiraProsp();
+  hideLoading();
+}
+
+async function enviarProspCRM(idx) {
   const l = leadsProsp[idx];
   if (crmLeads.find(c => c.prospId === idx && c.name === l.empresa)) { alert('Já está no CRM!'); return; }
   crmLeads.push({ id:Date.now(), name:l.empresa, value:0, stage:'qualificacao', date:new Date().toLocaleDateString('pt-BR'), prob:40, prospId:idx, address:l.endereco, category:l.segmento });
-  saveCrm(); renderKanban(); updateCrmMetrics();
+  renderKanban(); updateCrmMetrics();
+  await saveCrm();
   alert('✅ ' + l.empresa + ' adicionado ao CRM!');
 }
 
@@ -2497,7 +2325,6 @@ function exportarLeadsCSV() {
   a.click();
 }
 
-// ---- PITCH ----
 function abrirPitch(idx) {
   pitchLeadAtual = leadsProsp[idx];
   const l = pitchLeadAtual;
@@ -2595,7 +2422,6 @@ function copiarPitch() {
   });
 }
 
-// Inicializa prospecção ao carregar
 window.addEventListener('load', function() {
   if (leadsProsp.length > 0) { renderLeadsProsp(); atualizarStatsProsp(); }
 });
