@@ -1045,6 +1045,13 @@ let raioxMarkers = [];
 let salesChartInstance = null;
 
 window.onload = function() {
+  // Salva o ID do usuário autenticado o mais cedo possível,
+  // pra garantir que donoId seja preenchido mesmo antes do currentProfile carregar.
+  if (typeof sb !== 'undefined') {
+    sb.auth.getUser().then(({ data }) => {
+      if (data && data.user) window._authUserId = data.user.id;
+    });
+  }
   renderDashboard();
   renderServices();
   renderProposals();
@@ -2265,7 +2272,7 @@ async function executarGerarLeads() {
         dataReuniao: '',
         obsReuniao:  '',
         dataAdicionado: new Date().toLocaleDateString('pt-BR'),
-        donoId:      window.currentProfile ? window.currentProfile.id : null,
+        donoId:      (window.currentProfile && window.currentProfile.id) ? window.currentProfile.id : (window._authUserId || null),
         donoNome:    window.currentProfile ? (window.currentProfile.nome || window.currentProfile.email) : ''
       });
       adicionados++;
@@ -2310,10 +2317,11 @@ function getLeadsFiltrados() {
   const isAdmin = window.currentProfile && window.currentProfile.role === 'admin';
   const meuId   = window.currentProfile ? window.currentProfile.id : null;
   return leadsProsp.filter(l => {
-    // Cada pessoa só vê os próprios leads. Leads antigos sem "dono" (gerados
-    // antes desta correção) continuam visíveis pra todo mundo, pra não sumir
-    // histórico. Admin sempre vê tudo.
-    if (!isAdmin && l.donoId && l.donoId !== meuId) return false;
+    // Se o perfil ainda não carregou (meuId null), mostra tudo pra não sumir leads.
+    // Admin sempre vê tudo.
+    // Leads sem donoId são legados e visíveis pra todos.
+    // Leads com donoId só aparecem pro dono.
+    if (meuId && !isAdmin && l.donoId && l.donoId !== meuId) return false;
     if (q && !l.empresa.toLowerCase().includes(q) && !l.segmento.toLowerCase().includes(q) && !l.bairro.toLowerCase().includes(q)) return false;
     if (perfil && l.perfil !== perfil) return false;
     if (site   && l.temSite !== site)  return false;
