@@ -2196,18 +2196,13 @@ async function executarGerarLeads() {
   showLoading('Buscando ' + segmento + ' em ' + bairro + '...');
 
   try {
-    // Usa Places API (New) via proxy do servidor (/api/places?action=leads)
-    // Chamada direta do navegador é bloqueada por CORS — por isso vai pelo proxy.
-    const query = segmento + ' em ' + bairro;
+    // Usa proxy do servidor pra evitar bloqueio de CORS da Places API (New)
+    const query = encodeURIComponent(segmento + ' em ' + bairro);
+    const resp = await fetch(`/api/places?action=leads&query=${query}&max=${qtd}`);
 
-    const resp = await fetch('/api/places?action=leads', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ textQuery: query, languageCode: 'pt-BR', regionCode: 'BR', maxResultCount: 20 })
-    });
-
+    if (!resp.ok) throw new Error('Erro no servidor: ' + resp.status);
     const data = await resp.json();
-    if (data.error) throw new Error(data.error.message);
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
 
     const places = data.places || [];
     let adicionados = 0;
@@ -2268,15 +2263,19 @@ async function executarGerarLeads() {
       adicionados++;
     }
 
-    await salvarLeadsProsp();
     hideLoading();
-    renderLeadsProsp();
-    atualizarStatsProsp();
-    alert('✅ ' + adicionados + ' leads adicionados!\n\n🟢 Fraco: ' + leadsProsp.filter(l=>l.perfil==='Fraco (bom lead)').length + '\n🟡 Médio: ' + leadsProsp.filter(l=>l.perfil==='Médio').length);
+    if (adicionados === 0) {
+      alert('⚠️ Nenhum lead novo encontrado.\n\nMotivos possíveis:\n- Todos os resultados já estão na lista\n- Nenhuma empresa encontrada nessa região\n- Verifique se a API Key está correta em ⚙️ Configurar API');
+    } else {
+      await salvarLeadsProsp();
+      renderLeadsProsp();
+      atualizarStatsProsp();
+      alert('✅ ' + adicionados + ' leads adicionados!\n\n🟢 Fraco: ' + leadsProsp.filter(l=>l.perfil==='Fraco (bom lead)').length + '\n🟡 Médio: ' + leadsProsp.filter(l=>l.perfil==='Médio').length);
+    }
 
   } catch(e) {
     hideLoading();
-    alert('Erro ao buscar leads: ' + e.message);
+    alert('Erro ao buscar leads: ' + e.message + '\n\nSe o erro persistir, verifique se a Google API Key está configurada corretamente em ⚙️ Configurar API.');
   }
 }
 
