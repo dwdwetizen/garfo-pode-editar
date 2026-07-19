@@ -16,6 +16,7 @@
 
 const TEAM_DATA_KEYS = {
   leadsProsp: 'leads_prosp',
+  leadsLixeira: 'leads_lixeira',
   crmLeads: 'crm',
   analyses: 'analyses',
   proposals: 'proposals',
@@ -63,7 +64,14 @@ async function carregarDadosDoTime() {
     const byId = {};
     rows.forEach(r => byId[r.id] = r.data);
 
-    if (byId.leads_prosp) { leadsProsp = byId.leads_prosp; localStorage.setItem('localway_leads_prosp', JSON.stringify(leadsProsp)); }
+    if (byId.leads_prosp) {
+      leadsProsp = byId.leads_prosp;
+      localStorage.setItem('localway_leads_prosp', JSON.stringify(leadsProsp));
+    }
+    if (byId.leads_lixeira) {
+      leadsLixeira = byId.leads_lixeira;
+      localStorage.setItem('localway_leads_lixeira', JSON.stringify(leadsLixeira));
+    }
     if (byId.crm) { crmLeads = byId.crm; localStorage.setItem('gbp_crm', JSON.stringify(crmLeads)); }
     if (byId.follow_ups) { followUps = byId.follow_ups; localStorage.setItem('localway_followups', JSON.stringify(followUps)); }
     if (byId.analyses) { analyses = byId.analyses; localStorage.setItem('gbp_analyses', JSON.stringify(analyses)); }
@@ -72,6 +80,7 @@ async function carregarDadosDoTime() {
 
     // Re-renderiza as telas que já tiverem sido carregadas na página
     if (typeof renderLeadsProsp === 'function') renderLeadsProsp();
+    if (typeof atualizarContadorLixeira === 'function') atualizarContadorLixeira();
     if (typeof renderKanban === 'function') renderKanban();
     if (typeof renderFollowUps === 'function' && document.getElementById('page-followup')?.classList.contains('active')) renderFollowUps();
     if (typeof updateCrmMetrics === 'function') updateCrmMetrics();
@@ -95,7 +104,7 @@ async function enviarParaSupabase(chaveLocal) {
     // andamento, essa nova espera a anterior terminar antes de ler o estado
     // remoto — assim nunca lemos um dado "no meio do caminho".
     await _enfileirar(chaveLocal, async () => {
-      const dataMap = { leadsProsp, crmLeads, analyses, proposals, services, followUps };
+      const dataMap = { leadsProsp, leadsLixeira, crmLeads, analyses, proposals, services, followUps };
       let value = dataMap[chaveLocal];
       const { data: { user } } = await sb.auth.getUser();
 
