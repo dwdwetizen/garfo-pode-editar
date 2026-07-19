@@ -2144,7 +2144,7 @@ let leadsProsp = JSON.parse(localStorage.getItem('localway_leads_prosp') || '[]'
 let pitchLeadAtual = null;
 let pitchTipoAtual = 'abordagem';
 
-function salvarLeadsProsp() { localStorage.setItem('localway_leads_prosp', JSON.stringify(leadsProsp)); if(typeof enviarParaSupabase==='function') enviarParaSupabase('leadsProsp'); }
+async function salvarLeadsProsp() { localStorage.setItem('localway_leads_prosp', JSON.stringify(leadsProsp)); if(typeof enviarParaSupabase==='function') await enviarParaSupabase('leadsProsp'); }
 
 function getProspConfig() {
   return {
@@ -2271,7 +2271,7 @@ async function executarGerarLeads() {
       adicionados++;
     }
 
-    salvarLeadsProsp();
+    await salvarLeadsProsp();
     hideLoading();
     renderLeadsProsp();
     atualizarStatsProsp();
@@ -2435,9 +2435,9 @@ function renderLeadsProsp() {
   }
 }
 
-function alterarStatusProsp(idx, novoStatus) {
+async function alterarStatusProsp(idx, novoStatus) {
   leadsProsp[idx].status = novoStatus;
-  salvarLeadsProsp();
+  await salvarLeadsProsp();
   atualizarStatsProsp();
   if (novoStatus === 'Reunião marcada') {
     abrirModalReuniao(idx);
@@ -2459,18 +2459,18 @@ function formatarDataGcal(date) {
   return `${date.getFullYear()}${pad(date.getMonth()+1)}${pad(date.getDate())}T${pad(date.getHours())}${pad(date.getMinutes())}00`;
 }
 
-function deletarLeadProsp(idx) {
+async function deletarLeadProsp(idx) {
   if (!confirm('Excluir este lead?')) return;
   leadsProsp.splice(idx, 1);
-  salvarLeadsProsp();
+  await salvarLeadsProsp();
   renderLeadsProsp();
   atualizarStatsProsp();
 }
 
-function limparLeadsProsp() {
+async function limparLeadsProsp() {
   if (!confirm('Limpar TODOS os leads? Isso não pode ser desfeito.')) return;
   leadsProsp = [];
-  salvarLeadsProsp();
+  await salvarLeadsProsp();
   renderLeadsProsp();
   atualizarStatsProsp();
 }
