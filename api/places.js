@@ -43,11 +43,9 @@ module.exports = async function handler(req, res) {
       url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&key=${GOOGLE_KEY}&language=pt-BR`;
 
     } else if (action === 'leads') {
-      // Busca de leads via Places API (New) — roda no servidor pra evitar bloqueio de CORS
-      let reqBody = {};
-      if (req.body) {
-        try { reqBody = typeof req.body === 'string' ? JSON.parse(req.body) : req.body; } catch(e) {}
-      }
+      // Busca de leads via Places API (New) — roda no servidor pra evitar CORS
+      const textQuery = params.query || '';
+      const maxResults = parseInt(params.max || '20');
       const leadsResp = await fetch('https://places.googleapis.com/v1/places:searchText', {
         method: 'POST',
         headers: {
@@ -61,7 +59,7 @@ module.exports = async function handler(req, res) {
             'places.priceLevel','places.primaryTypeDisplayName','places.businessStatus'
           ].join(',')
         },
-        body: JSON.stringify(reqBody)
+        body: JSON.stringify({ textQuery, languageCode: 'pt-BR', regionCode: 'BR', maxResultCount: maxResults })
       });
       const leadsData = await leadsResp.json();
       return res.status(200).json(leadsData);
