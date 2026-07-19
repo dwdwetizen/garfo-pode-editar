@@ -43,6 +43,8 @@ function registrarFollowUp(lead, { origem, resultado, statusGeral, prioridade })
       leadId: leadKey,
       empresa: lead.empresa || '',
       telefone: lead.telefone || '',
+      endereco: lead.endereco || '',
+      segmento: lead.segmento || lead.categoria || '',
       origem: origem || 'Ligação',
       data1Contato: hoje.toISOString(),
       dataUltimaAcao: hoje.toISOString(),
@@ -59,6 +61,90 @@ function registrarFollowUp(lead, { origem, resultado, statusGeral, prioridade })
   }
   salvarFollowUps();
   if (document.getElementById('page-followup')?.classList.contains('active')) renderFollowUps();
+}
+
+// ===================== FORMULÁRIO (Novo / Editar) =====================
+// Substitui os antigos prompt() por um formulário de verdade, com todos os
+// dados da empresa e um campo de data explícito pro lembrete de retorno.
+// Chame sem argumento pra criar um novo, ou com o id pra editar um existente.
+function abrirModalFollowUp(id) {
+  const modal = document.getElementById('modal-followup');
+  if (!modal) return;
+  const fu = id ? followUps.find(f => f.id === id) : null;
+
+  document.getElementById('fu-modal-titulo').textContent = fu ? '📋 Editar Follow-up' : '📋 Novo Follow-up';
+  document.getElementById('fu-form-id').value = fu ? fu.id : '';
+  document.getElementById('fu-form-empresa').value = fu ? (fu.empresa || '') : '';
+  document.getElementById('fu-form-telefone').value = fu ? (fu.telefone || '') : '';
+  document.getElementById('fu-form-endereco').value = fu ? (fu.endereco || '') : '';
+  document.getElementById('fu-form-segmento').value = fu ? (fu.segmento || '') : '';
+  document.getElementById('fu-form-origem').value = fu ? (fu.origem || 'Ligação') : 'Presencial';
+  document.getElementById('fu-form-obs').value = fu ? (fu.observacoes || '') : '';
+
+  // Data do lembrete: usa a que já existe, ou sugere "daqui a X dias" (config do admin)
+  const dataBase = fu ? new Date(fu.proximoFollowup) : (() => {
+    const d = new Date(); d.setDate(d.getDate() + (window.followUpConfig.diasPadrao || 3)); return d;
+  })();
+  document.getElementById('fu-form-data').value = dataBase.toISOString().split('T')[0];
+
+  modal.style.display = 'flex';
+}
+
+function fecharModalFollowUp() { document.getElementById('modal-followup').style.display = 'none'; }
+
+function salvarModalFollowUp() {
+  const id        = document.getElementById('fu-form-id').value;
+  const empresa   = document.getElementById('fu-form-empresa').value.trim();
+  const telefone  = document.getElementById('fu-form-telefone').value.trim();
+  const endereco  = document.getElementById('fu-form-endereco').value.trim();
+  const segmento  = document.getElementById('fu-form-segmento').value.trim();
+  const origem    = document.getElementById('fu-form-origem').value;
+  const dataStr   = document.getElementById('fu-form-data').value;
+  const obs       = document.getElementById('fu-form-obs').value.trim();
+
+  if (!empresa) { alert('Preencha o nome da empresa.'); return; }
+  if (!dataStr) { alert('Escolha a data do lembrete de retorno.'); return; }
+
+  const proximoFollowup = new Date(dataStr + 'T09:00:00').toISOString();
+  const hoje = new Date().toISOString();
+
+  if (id) {
+    // Editando um follow-up existente
+    const fu = followUps.find(f => f.id === parseInt(id));
+    if (fu) {
+      fu.empresa = empresa;
+      fu.telefone = telefone;
+      fu.endereco = endereco;
+      fu.segmento = segmento;
+      fu.origem = origem;
+      fu.proximoFollowup = proximoFollowup;
+      fu.observacoes = obs;
+      fu.dataUltimaAcao = hoje;
+    }
+  } else {
+    // Criando um novo follow-up manual, com a data escolhida por você
+    // (não usa o padrão automático de "+3 dias")
+    followUps.push({
+      id: Date.now(),
+      leadId: 'manual_' + Date.now(),
+      empresa, telefone, endereco, segmento,
+      origem,
+      data1Contato: hoje,
+      dataUltimaAcao: hoje,
+      resultado: 'Retornar depois',
+      statusGeral: 'Novo lead',
+      proximoFollowup,
+      tentativas: 1,
+      prioridade: 'Média',
+      observacoes: obs,
+      donoId: window.currentProfile ? window.currentProfile.id : null,
+      donoNome: window.currentProfile ? (window.currentProfile.nome || window.currentProfile.email) : ''
+    });
+  }
+
+  salvarFollowUps();
+  fecharModalFollowUp();
+  renderFollowUps();
 }
 
 function getFollowUpsFiltrados() {
@@ -147,6 +233,7 @@ function renderFollowUps() {
           </td>
           <td style="padding:10px 12px;text-align:center;">
             <div style="display:flex;gap:4px;justify-content:center;">
+              <button onclick="abrirModalFollowUp(${f.id})" class="btn btn-secondary" style="font-size:11px;padding:5px 8px;" title="Editar dados da empresa e lembrete">✏️</button>
               <button onclick="adiarFollowUp(${f.id})" class="btn btn-secondary" style="font-size:11px;padding:5px 8px;" title="Adiar follow-up">📅</button>
               <button onclick="concluirFollowUp(${f.id})" class="btn btn-primary" style="font-size:11px;padding:5px 8px;" title="Marcar como concluído/fechado">✓</button>
             </div>
@@ -186,22 +273,3 @@ function concluirFollowUp(id) {
 }
 
 function filtrarFollowUps() { renderFollowUps(); }
-
-// Prospecção presencial não vem da Places API (é o SDR batendo perna na rua),
-// então esse cadastro é manual e simples — só o essencial pra já entrar na
-// esteira de follow-up com contador e alerta de prazo.
-function abrirNovoFollowUpPresencial() {
-  const empresa = prompt('Nome da empresa visitada:');
-  if (!empresa) return;
-  const telefone = prompt('Telefone (opcional):') || '';
-  const observacoes = prompt('Alguma observação da visita? (opcional)') || '';
-
-  registrarFollowUp(
-    { id: 'presencial_' + Date.now(), empresa, telefone },
-    { origem: 'Presencial', resultado: 'Retornar depois', statusGeral: 'Novo lead' }
-  );
-
-  const fu = followUps[followUps.length - 1];
-  if (fu && observacoes) { fu.observacoes = observacoes; salvarFollowUps(); }
-  renderFollowUps();
-}
