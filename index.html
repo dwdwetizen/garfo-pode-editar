@@ -500,6 +500,8 @@ select.input { cursor:pointer; }
     <button class="nav-item" data-perm="servicos" onclick="goTo('servicos')"><span class="nav-icon">💼</span><span class="nav-label">Meus Serviços</span></button>
     <button class="nav-item" data-perm="propostas" onclick="goTo('propostas')"><span class="nav-icon">📄</span><span class="nav-label">Propostas</span></button>
     <button class="nav-item" data-perm="prospeccao" onclick="goTo('prospeccao')"><span class="nav-icon">🎯</span><span class="nav-label">Prospecção</span></button>
+    <button class="nav-item" data-perm="prospeccao" onclick="goTo('followup')"><span class="nav-icon">📋</span><span class="nav-label">Follow-up</span></button>
+    <button class="nav-item" data-perm="metas" onclick="goTo('metas')"><span class="nav-icon">🎯</span><span class="nav-label">Metas</span></button>
     <button class="nav-item" data-perm="crm" onclick="goTo('crm')"><span class="nav-icon">🚀</span><span class="nav-label">CRM / Vendas</span></button>
     <button class="nav-item" data-perm="admin" id="navAdmin" onclick="goTo('admin')" style="display:none;"><span class="nav-icon">⚙️</span><span class="nav-label">Administração</span></button>
     <button class="nav-item" data-perm="admin" id="navTeamView" onclick="goTo('team-view')" style="display:none;"><span class="nav-icon">👀</span><span class="nav-label">Visão da Equipe</span></button>
@@ -762,7 +764,24 @@ select.input { cursor:pointer; }
           <option value="Fechado">Fechado</option>
         </select>
         <button class="btn btn-secondary" onclick="exportarLeadsCSV()" style="font-size:12px;padding:8px 14px;">📥 Exportar CSV</button>
-        <button class="btn btn-danger" onclick="limparLeadsProsp()" style="font-size:12px;padding:8px 14px;">🗑 Limpar</button>
+        <button class="btn btn-danger" onclick="limparLeadsProsp()" style="font-size:12px;padding:8px 14px;">🗑 Limpar tudo</button>
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+        <span style="font-size:12px;color:var(--text2);font-weight:600;">Excluir por período:</span>
+        <button class="btn btn-secondary" style="font-size:11px;padding:6px 10px;" onclick="excluirLeadsPorPeriodo('hoje')">Hoje</button>
+        <button class="btn btn-secondary" style="font-size:11px;padding:6px 10px;" onclick="excluirLeadsPorPeriodo('semana')">Esta semana</button>
+        <span style="font-size:12px;color:var(--text2);">de</span>
+        <input type="date" id="prosp-del-de" style="padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:12px;">
+        <span style="font-size:12px;color:var(--text2);">até</span>
+        <input type="date" id="prosp-del-ate" style="padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:12px;">
+        <button class="btn btn-danger" style="font-size:11px;padding:6px 10px;" onclick="excluirLeadsPorPeriodo('intervalo')">Excluir período</button>
+      </div>
+
+      <div id="prosp-bulk-bar" style="display:none;gap:10px;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+        <span style="font-size:12px;color:var(--text2);"><b id="prosp-bulk-count">0</b> selecionado(s)</span>
+        <button class="btn btn-danger" style="font-size:11px;padding:6px 10px;" onclick="excluirLeadsSelecionados()">🗑 Excluir selecionados</button>
+        <button class="btn btn-secondary" style="font-size:11px;padding:6px 10px;" onclick="limparSelecaoProsp()">Cancelar seleção</button>
       </div>
     </div>
 
@@ -911,6 +930,61 @@ select.input { cursor:pointer; }
 
   </div>
 
+  <!-- FOLLOW-UP -->
+  <div class="page" id="page-followup">
+    <div class="section-header">
+      <div>
+        <h2>Follow-up</h2>
+        <p style="color:var(--text2);font-size:13px;margin-top:4px;">Contatos que pediram retorno ou tiveram reunião marcada — ligação e presencial juntos, com filtro abaixo.</p>
+      </div>
+      <button class="btn btn-primary" onclick="abrirNovoFollowUpPresencial()">🚶 Novo (Presencial)</button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+      <div class="card" style="padding:16px;">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:4px;">Total no follow-up</div>
+        <div style="font-size:24px;font-weight:700;" id="fu-total">0</div>
+      </div>
+      <div class="card" style="padding:16px;">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:4px;">⚠️ Atrasados</div>
+        <div style="font-size:24px;font-weight:700;color:var(--red2);" id="fu-atrasados">0</div>
+      </div>
+      <div class="card" style="padding:16px;">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:4px;">🟡 Vencem hoje</div>
+        <div style="font-size:24px;font-weight:700;color:var(--yellow2);" id="fu-hoje">0</div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+      <input class="input" id="fu-search" placeholder="🔍 Buscar empresa..." style="flex:1;min-width:200px;" oninput="filtrarFollowUps()">
+      <select class="input" id="fu-filter-origem" onchange="filtrarFollowUps()" style="width:auto;padding:10px 12px;font-size:13px;">
+        <option value="">Todas as origens</option>
+        <option value="Ligação">📞 Ligação</option>
+        <option value="Presencial">🚶 Presencial</option>
+      </select>
+    </div>
+
+    <div id="fu-empty" style="text-align:center;padding:60px 20px;color:var(--text2);display:none;">
+      <div style="font-size:48px;margin-bottom:16px;">📋</div>
+      <div style="font-size:16px;font-weight:600;margin-bottom:8px;">Nenhum follow-up pendente</div>
+      <div style="font-size:13px;">Quando você marcar "Retornar" ou "Reunião marcada" em um lead na Prospecção, ele aparece aqui automaticamente.</div>
+    </div>
+    <div id="fu-lista"></div>
+  </div>
+
+  <!-- METAS (colaborador) -->
+  <div class="page" id="page-metas">
+    <div class="section-header">
+      <div>
+        <h2>Suas Metas</h2>
+        <p style="color:var(--text2);font-size:13px;margin-top:4px;">Ligações necessárias por semana e por dia, com seu progresso atual.</p>
+      </div>
+    </div>
+    <div id="metas-colaborador-box">
+      <div style="color:var(--text2);font-size:13px;">Carregando...</div>
+    </div>
+  </div>
+
   <!-- CRM -->
   <div class="page" id="page-crm">
     <div class="section-header">
@@ -975,6 +1049,28 @@ select.input { cursor:pointer; }
       <div style="color:var(--text2);font-size:13px;margin-bottom:24px;">Configurações do sistema e gerenciamento de funcionários</div>
 
       <div class="card" style="padding:20px;margin-bottom:20px;">
+        <div style="font-weight:600;margin-bottom:6px;">🎯 Metas dos Colaboradores</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:14px;">Cada colaborador só vê a meta de ligações (semana/dia) — faturamento, ticket e conversão ficam só aqui.</div>
+        <div id="metas-admin-box"></div>
+      </div>
+
+      <div class="card" style="padding:20px;margin-bottom:20px;">
+        <div style="font-weight:600;margin-bottom:14px;">📋 Regras de Follow-up</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <label style="display:block;font-size:12px;color:var(--text2);margin-bottom:4px;">Dias até o próximo follow-up (padrão)</label>
+            <input type="number" min="1" id="adm-dias-followup" style="width:100%;padding:9px 11px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;color:var(--text2);margin-bottom:4px;">Avisar em amarelo com quantos dias de antecedência</label>
+            <input type="number" min="0" id="adm-dias-alerta" style="width:100%;padding:9px 11px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;">
+          </div>
+        </div>
+        <button class="login-btn" style="width:auto;padding:9px 18px;margin-top:14px;" onclick="salvarConfigFollowUp()">Salvar regras de follow-up</button>
+        <div id="adm-followup-msg" style="font-size:12px;margin-top:8px;"></div>
+      </div>
+
+      <div class="card" style="padding:20px;margin-bottom:20px;">
         <div style="font-weight:600;margin-bottom:14px;">🔑 Chaves de API e Agenda</div>
         <div style="display:grid;gap:12px;">
           <div>
@@ -1025,6 +1121,8 @@ select.input { cursor:pointer; }
 <script src="/admin.js"></script>
 <script src="/sync.js"></script>
 <script src="/calendar.js"></script>
+<script src="/followup.js"></script>
+<script src="/metas.js"></script>
 
 <script src="/auth.js"></script>
 <script>
@@ -1033,6 +1131,7 @@ let analyses = JSON.parse(localStorage.getItem('gbp_analyses') || '[]');
 let services = JSON.parse(localStorage.getItem('gbp_services') || 'null') || getDefaultServices();
 let proposals = JSON.parse(localStorage.getItem('gbp_proposals') || '[]');
 let crmLeads = JSON.parse(localStorage.getItem('gbp_crm') || '[]');
+let followUps = JSON.parse(localStorage.getItem('localway_followups') || '[]');
 let currentAnalysis = null;
 let sortOrder = 'recent';
 let searchQuery = '';
@@ -1068,6 +1167,8 @@ function goTo(page) {
   if(page === 'dashboard') renderDashboard();
   if(page === 'admin' && typeof loadAdminPanel === 'function') loadAdminPanel();
   if(page === 'team-view' && typeof loadTeamViewSelect === 'function') loadTeamViewSelect();
+  if(page === 'followup' && typeof renderFollowUps === 'function') renderFollowUps();
+  if(page === 'metas' && typeof renderMetasColaborador === 'function') renderMetasColaborador();
 }
 
 function toggleSidebar() {
@@ -2006,7 +2107,7 @@ function renderKanban() {
 
 let draggedLeadId = null;
 function dragLead(e, id) { draggedLeadId = id; }
-function dropLead(e, stage) { if(!draggedLeadId) return; const lead = crmLeads.find(l => l.id === draggedLeadId); if(lead) { lead.stage = stage; saveCrm(); renderKanban(); updateCrmMetrics(); } draggedLeadId = null; }
+function dropLead(e, stage) { if(!draggedLeadId) return; const lead = crmLeads.find(l => l.id === draggedLeadId); if(lead) { lead.stage = stage; if (stage === 'fechado_ganho' && !lead.dataFechamento) { lead.dataFechamento = new Date().toISOString(); } saveCrm(); renderKanban(); updateCrmMetrics(); } draggedLeadId = null; }
 
 function openNewLead() {
   const name = prompt('Nome do lead / empresa:'); if(!name) return;
@@ -2128,10 +2229,14 @@ function setCrmPeriod(p, el) { document.querySelectorAll('#crm-metrics .filter-t
 function toggleDarkMode() {}
 
 // ===================== STORAGE =====================
-function saveAnalyses() { localStorage.setItem('gbp_analyses', JSON.stringify(analyses)); if(typeof enviarParaSupabase==='function') enviarParaSupabase('analyses'); }
-function saveServices() { localStorage.setItem('gbp_services', JSON.stringify(services)); if(typeof enviarParaSupabase==='function') enviarParaSupabase('services'); }
-function saveProposals() { localStorage.setItem('gbp_proposals', JSON.stringify(proposals)); if(typeof enviarParaSupabase==='function') enviarParaSupabase('proposals'); }
-function saveCrm() { localStorage.setItem('gbp_crm', JSON.stringify(crmLeads)); if(typeof enviarParaSupabase==='function') enviarParaSupabase('crmLeads'); }
+// As funções abaixo agora são "async" e retornam a promise do envio pro Supabase.
+// Isso permite que quem chama (ex: excluir, gerar leads) use "await" e só
+// continue depois que a gravação remota realmente terminou — evitando que um
+// refresh de página ou o polling automático tragam de volta dados antigos.
+async function saveAnalyses() { localStorage.setItem('gbp_analyses', JSON.stringify(analyses)); if(typeof enviarParaSupabase==='function') await enviarParaSupabase('analyses'); }
+async function saveServices() { localStorage.setItem('gbp_services', JSON.stringify(services)); if(typeof enviarParaSupabase==='function') await enviarParaSupabase('services'); }
+async function saveProposals() { localStorage.setItem('gbp_proposals', JSON.stringify(proposals)); if(typeof enviarParaSupabase==='function') await enviarParaSupabase('proposals'); }
+async function saveCrm() { localStorage.setItem('gbp_crm', JSON.stringify(crmLeads)); if(typeof enviarParaSupabase==='function') await enviarParaSupabase('crmLeads'); }
 
 // ===================== LOADING =====================
 function showLoading(msg) { document.getElementById('loadingText').textContent = msg || 'Carregando...'; document.getElementById('loadingOverlay').style.display = 'flex'; }
@@ -2144,7 +2249,7 @@ let leadsProsp = JSON.parse(localStorage.getItem('localway_leads_prosp') || '[]'
 let pitchLeadAtual = null;
 let pitchTipoAtual = 'abordagem';
 
-function salvarLeadsProsp() { localStorage.setItem('localway_leads_prosp', JSON.stringify(leadsProsp)); if(typeof enviarParaSupabase==='function') enviarParaSupabase('leadsProsp'); }
+async function salvarLeadsProsp() { localStorage.setItem('localway_leads_prosp', JSON.stringify(leadsProsp)); if(typeof enviarParaSupabase==='function') await enviarParaSupabase('leadsProsp'); }
 
 function getProspConfig() {
   return {
@@ -2271,10 +2376,11 @@ async function executarGerarLeads() {
       adicionados++;
     }
 
-    salvarLeadsProsp();
-    hideLoading();
     renderLeadsProsp();
     atualizarStatsProsp();
+    updateLoading('Salvando no servidor...');
+    await salvarLeadsProsp();
+    hideLoading();
     alert('✅ ' + adicionados + ' leads adicionados!\n\n🟢 Fraco: ' + leadsProsp.filter(l=>l.perfil==='Fraco (bom lead)').length + '\n🟡 Médio: ' + leadsProsp.filter(l=>l.perfil==='Médio').length);
 
   } catch(e) {
@@ -2295,11 +2401,16 @@ function calcularPerfilProsp(nota, avaliacoes, temSite, fotos) {
 }
 
 function atualizarStatsProsp() {
-  const lista = getLeadsFiltrados();
-  document.getElementById('ps-total').textContent   = leadsProsp.length;
-  document.getElementById('ps-fraco').textContent   = leadsProsp.filter(l=>l.perfil==='Fraco (bom lead)').length;
-  document.getElementById('ps-medio').textContent   = leadsProsp.filter(l=>l.perfil==='Médio').length;
-  document.getElementById('ps-reuniao').textContent = leadsProsp.filter(l=>l.status==='Reunião marcada').length;
+  // Usa a MESMA regra de dono que a lista usa embaixo, senão os números do
+  // topo mostram o total do time inteiro em vez do total da pessoa logada.
+  const isAdmin = window.currentProfile && window.currentProfile.role === 'admin';
+  const meuId   = window.currentProfile ? window.currentProfile.id : null;
+  const minhaBase = isAdmin ? leadsProsp : leadsProsp.filter(l => !l.donoId || l.donoId === meuId);
+
+  document.getElementById('ps-total').textContent   = minhaBase.length;
+  document.getElementById('ps-fraco').textContent   = minhaBase.filter(l=>l.perfil==='Fraco (bom lead)').length;
+  document.getElementById('ps-medio').textContent   = minhaBase.filter(l=>l.perfil==='Médio').length;
+  document.getElementById('ps-reuniao').textContent = minhaBase.filter(l=>l.status==='Reunião marcada').length;
 }
 
 function getLeadsFiltrados() {
@@ -2328,6 +2439,7 @@ function renderLeadsProsp() {
   const lista   = getLeadsFiltrados();
   const empty   = document.getElementById('prosp-empty');
   const cont    = document.getElementById('prosp-lista');
+  if (typeof atualizarBarraSelecaoProsp === 'function') atualizarBarraSelecaoProsp();
   if (!cont) return;
   if (leadsProsp.length === 0) { empty.style.display = 'block'; cont.innerHTML = ''; return; }
   empty.style.display = 'none';
@@ -2346,9 +2458,12 @@ function renderLeadsProsp() {
       const sc  = statusCor[l.status] || 'var(--text2)';
       return `<div class="card" style="margin-bottom:10px;padding:14px;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-          <div>
-            <div style="font-size:14px;font-weight:600;">${l.empresa}</div>
-            <div style="font-size:11px;color:var(--text2);">${l.segmento} · ${l.bairro}</div>
+          <div style="display:flex;gap:8px;">
+            <input type="checkbox" class="prosp-select-cb" data-idx="${idx}" ${selecionadosProsp.has(idx)?'checked':''} onchange="toggleSelecaoProsp(${idx})" style="margin-top:3px;">
+            <div>
+              <div style="font-size:14px;font-weight:600;">${l.empresa}</div>
+              <div style="font-size:11px;color:var(--text2);">${l.segmento} · ${l.bairro}</div>
+            </div>
           </div>
           <span style="font-size:10px;font-weight:600;color:${pc};white-space:nowrap;margin-left:8px;">${l.perfil==='Fraco (bom lead)'?'🟢 Bom lead':l.perfil==='Médio'?'🟡 Médio':'🔴 Forte'}</span>
         </div>
@@ -2378,6 +2493,7 @@ function renderLeadsProsp() {
     <table style="width:100%;border-collapse:collapse;font-size:13px;">
       <thead>
         <tr style="background:var(--bg2);border-bottom:1px solid var(--border);">
+          <th style="text-align:center;padding:10px 8px;width:30px;"><input type="checkbox" id="prosp-select-all-cb" onchange="toggleSelecaoTodosProsp(this.checked)"></th>
           <th style="text-align:left;padding:10px 12px;font-weight:600;color:var(--text2);font-size:11px;white-space:nowrap;">Empresa</th>
           <th style="text-align:left;padding:10px 12px;font-weight:600;color:var(--text2);font-size:11px;">Telefone</th>
           <th style="text-align:center;padding:10px 12px;font-weight:600;color:var(--text2);font-size:11px;">Site</th>
@@ -2397,6 +2513,7 @@ function renderLeadsProsp() {
           const opCor = l.oportunidade.includes('Sem site') ? 'rgba(35,134,54,.15)' : 'rgba(210,153,34,.12)';
           const opTxt = l.oportunidade.includes('Sem site') ? 'var(--green2)' : 'var(--yellow2)';
           return `<tr style="border-bottom:1px solid var(--border);transition:background .1s;" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background='transparent'">
+            <td style="padding:10px 8px;text-align:center;"><input type="checkbox" class="prosp-select-cb" data-idx="${idx}" ${selecionadosProsp.has(idx)?'checked':''} onchange="toggleSelecaoProsp(${idx})"></td>
             <td style="padding:10px 12px;">
               <div style="font-weight:500;">${l.empresa}</div>
               <div style="font-size:11px;color:var(--text2);">${l.segmento} · ${l.bairro}</div>
@@ -2435,12 +2552,29 @@ function renderLeadsProsp() {
   }
 }
 
-function alterarStatusProsp(idx, novoStatus) {
+async function alterarStatusProsp(idx, novoStatus) {
   leadsProsp[idx].status = novoStatus;
-  salvarLeadsProsp();
+  // Alimenta o Painel de Metas: toda mudança de status conta como um
+  // contato feito (ligação), com a data de hoje.
+  if (novoStatus !== 'Não contatado') {
+    leadsProsp[idx].dataContato = new Date().toISOString();
+  }
+  await salvarLeadsProsp();
   atualizarStatsProsp();
   if (novoStatus === 'Reunião marcada') {
     abrirModalReuniao(idx);
+  }
+  // Manda pro Follow-up nos dois casos: "Retornar" (o lead pediu retorno) e
+  // "Reunião marcada" (rede de segurança — se a reunião cair, o lead não
+  // se perde, continua aparecendo no Follow-up até virar CRM de verdade).
+  if (novoStatus === 'Retornar' || novoStatus === 'Reunião marcada') {
+    const resultadoMap = { 'Retornar': 'Retornar depois', 'Reunião marcada': 'Reunião marcada' };
+    const statusMap = { 'Retornar': 'Em negociação', 'Reunião marcada': 'Follow-up agendado' };
+    registrarFollowUp(leadsProsp[idx], {
+      origem: 'Ligação',
+      resultado: resultadoMap[novoStatus],
+      statusGeral: statusMap[novoStatus]
+    });
   }
   renderLeadsProsp();
 }
@@ -2459,27 +2593,131 @@ function formatarDataGcal(date) {
   return `${date.getFullYear()}${pad(date.getMonth()+1)}${pad(date.getDate())}T${pad(date.getHours())}${pad(date.getMinutes())}00`;
 }
 
-function deletarLeadProsp(idx) {
+async function deletarLeadProsp(idx) {
   if (!confirm('Excluir este lead?')) return;
   leadsProsp.splice(idx, 1);
-  salvarLeadsProsp();
   renderLeadsProsp();
   atualizarStatsProsp();
+  showLoading('Excluindo lead...');
+  await salvarLeadsProsp();
+  hideLoading();
 }
 
-function limparLeadsProsp() {
+async function limparLeadsProsp() {
   if (!confirm('Limpar TODOS os leads? Isso não pode ser desfeito.')) return;
   leadsProsp = [];
-  salvarLeadsProsp();
   renderLeadsProsp();
   atualizarStatsProsp();
+  // Espera a confirmação do Supabase antes de liberar a tela. Isso evita que
+  // um refresh logo em seguida traga de volta a versão antiga (que ainda
+  // estaria salva no banco enquanto essa gravação não tivesse terminado).
+  showLoading('Apagando leads no servidor...');
+  await salvarLeadsProsp();
+  hideLoading();
+  alert('✅ Leads apagados.');
 }
 
-function enviarProspCRM(idx) {
+// ===================== SELEÇÃO MÚLTIPLA E EXCLUSÃO =====================
+let selecionadosProsp = new Set();
+
+function toggleSelecaoProsp(idx) {
+  if (selecionadosProsp.has(idx)) selecionadosProsp.delete(idx);
+  else selecionadosProsp.add(idx);
+  atualizarBarraSelecaoProsp();
+}
+
+function toggleSelecaoTodosProsp(marcar) {
+  const lista = getLeadsFiltrados();
+  lista.forEach(l => {
+    const idx = leadsProsp.indexOf(l);
+    if (marcar) selecionadosProsp.add(idx); else selecionadosProsp.delete(idx);
+  });
+  renderLeadsProsp();
+  atualizarBarraSelecaoProsp();
+}
+
+function limparSelecaoProsp() {
+  selecionadosProsp.clear();
+  renderLeadsProsp();
+  atualizarBarraSelecaoProsp();
+}
+
+function atualizarBarraSelecaoProsp() {
+  const bar = document.getElementById('prosp-bulk-bar');
+  const count = document.getElementById('prosp-bulk-count');
+  if (!bar || !count) return;
+  count.textContent = selecionadosProsp.size;
+  bar.style.display = selecionadosProsp.size > 0 ? 'flex' : 'none';
+}
+
+async function excluirLeadsSelecionados() {
+  if (selecionadosProsp.size === 0) return;
+  if (!confirm(`Excluir ${selecionadosProsp.size} lead(s) selecionado(s)? Isso não pode ser desfeito.`)) return;
+  const idxOrdenados = Array.from(selecionadosProsp).sort((a, b) => b - a); // remove de trás pra frente
+  idxOrdenados.forEach(idx => leadsProsp.splice(idx, 1));
+  selecionadosProsp.clear();
+  renderLeadsProsp();
+  atualizarStatsProsp();
+  atualizarBarraSelecaoProsp();
+  showLoading('Excluindo leads selecionados...');
+  await salvarLeadsProsp();
+  hideLoading();
+}
+
+// Excluir por período: "hoje", "semana" (segunda até hoje) ou "intervalo"
+// (usa as datas escolhidas nos campos de/até). Compara com dataAdicionado,
+// que é salvo como texto dd/mm/aaaa.
+function parseDataBR(str) {
+  if (!str) return null;
+  const [d, m, y] = str.split('/').map(Number);
+  if (!d || !m || !y) return null;
+  return new Date(y, m - 1, d);
+}
+
+async function excluirLeadsPorPeriodo(modo) {
+  let de, ate;
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+
+  if (modo === 'hoje') {
+    de = new Date(hoje); ate = new Date(hoje);
+  } else if (modo === 'semana') {
+    const diaSemana = hoje.getDay();
+    const diff = (diaSemana === 0 ? -6 : 1) - diaSemana;
+    de = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + diff);
+    ate = new Date(hoje);
+  } else {
+    const deVal = document.getElementById('prosp-del-de').value;
+    const ateVal = document.getElementById('prosp-del-ate').value;
+    if (!deVal || !ateVal) { alert('Escolha as duas datas (de/até) antes de excluir por período.'); return; }
+    de = new Date(deVal + 'T00:00:00');
+    ate = new Date(ateVal + 'T00:00:00');
+  }
+  ate.setHours(23,59,59,999);
+
+  const alvo = leadsProsp.filter(l => {
+    const d = parseDataBR((l.dataAdicionado || '').split(' ')[0]);
+    return d && d >= de && d <= ate;
+  });
+
+  if (alvo.length === 0) { alert('Nenhum lead encontrado nesse período.'); return; }
+  if (!confirm(`Excluir ${alvo.length} lead(s) adicionados entre ${de.toLocaleDateString('pt-BR')} e ${ate.toLocaleDateString('pt-BR')}? Isso não pode ser desfeito.`)) return;
+
+  leadsProsp = leadsProsp.filter(l => !alvo.includes(l));
+  selecionadosProsp.clear();
+  renderLeadsProsp();
+  atualizarStatsProsp();
+  atualizarBarraSelecaoProsp();
+  showLoading('Excluindo leads do período...');
+  await salvarLeadsProsp();
+  hideLoading();
+}
+
+async function enviarProspCRM(idx) {
   const l = leadsProsp[idx];
   if (crmLeads.find(c => c.prospId === idx && c.name === l.empresa)) { alert('Já está no CRM!'); return; }
   crmLeads.push({ id:Date.now(), name:l.empresa, value:0, stage:'qualificacao', date:new Date().toLocaleDateString('pt-BR'), prob:40, prospId:idx, address:l.endereco, category:l.segmento });
-  saveCrm(); renderKanban(); updateCrmMetrics();
+  renderKanban(); updateCrmMetrics();
+  await saveCrm();
   alert('✅ ' + l.empresa + ' adicionado ao CRM!');
 }
 
