@@ -132,6 +132,29 @@ select.input { cursor:pointer; }
 .geogrid-config { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:20px; }
 .geogrid-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 .cost-bar { background:var(--bg3); border-radius:var(--radius-sm); padding:12px 16px; display:flex; justify-content:space-between; align-items:center; margin-top:12px; }
+
+/* GEOGRID — layout de duas colunas, ocupa a tela inteira */
+.geogrid-layout { display:grid; grid-template-columns:360px 1fr; gap:20px; align-items:start; }
+.geogrid-map-card { padding:0; overflow:hidden; }
+.geogrid-map-header { padding:16px 20px; }
+#gg-map-container { width:100%; height:680px; }
+.gg-map-wrap { position:relative; }
+.gg-fullscreen-btn {
+  position:absolute; top:12px; right:12px; z-index:1000;
+  width:36px; height:36px; border-radius:8px; border:1px solid var(--border);
+  background:var(--bg2); color:var(--text); cursor:pointer; font-size:15px;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.4);
+}
+.gg-fullscreen-btn:hover { background:var(--bg3); }
+.gg-map-wrap.gg-fullscreen {
+  position:fixed; inset:0; z-index:9999; background:var(--bg);
+}
+.gg-map-wrap.gg-fullscreen #gg-map-container { height:100vh; border-radius:0; }
+@media (max-width: 900px) {
+  .geogrid-layout { grid-template-columns:1fr; }
+  #gg-map-container { height:420px; }
+}
 #map-container, #crm-map-container { width:100%; height:480px; border-radius:var(--radius); overflow:hidden; border:1px solid var(--border); }
 .leaflet-container { background:var(--bg3); }
 .raiox-wrap { display:grid; grid-template-columns:300px 1fr; gap:0; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
@@ -412,58 +435,69 @@ select.input { cursor:pointer; }
         <div class="section-sub">Mapeie sua visibilidade local por palavra-chave.</div>
       </div>
     </div>
-    <div class="geogrid-config">
-      <div style="font-size:15px; font-weight:600; margin-bottom:16px;">Configuração</div>
-      <div class="input-group">
-        <label class="input-label">Palavra-chave ativa (usada na varredura)</label>
-        <input type="text" class="input" id="ggKeyword" placeholder="ex: pet shop fortaleza">
-      </div>
-      <div style="margin:-6px 0 16px;">
-        <button type="button" class="btn btn-secondary" style="font-size:12px;padding:7px 12px;" onclick="sugerirPalavrasChaveGeogrid()">🤖 Sugerir palavras-chave com IA</button>
-        <div id="gg-keyword-suggestions" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;"></div>
-      </div>
-      <div class="input-group">
-        <label class="input-label">Link do Perfil GBP</label>
-        <input type="text" class="input" id="ggUrl" placeholder="ex: https://maps.app.goo.gl/...">
-      </div>
-      <div class="geogrid-row" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-        <div class="input-group">
-          <label class="input-label">Espaçamento (km)</label>
-          <input type="number" class="input" id="ggSpacing" value="1" min="0.5" max="5" step="0.5">
+    <div class="geogrid-layout">
+      <div>
+        <div class="geogrid-config">
+          <div style="font-size:15px; font-weight:600; margin-bottom:16px;">Configuração</div>
+          <div class="input-group">
+            <label class="input-label">Palavra-chave ativa (usada na varredura)</label>
+            <input type="text" class="input" id="ggKeyword" placeholder="ex: pet shop fortaleza">
+          </div>
+          <div style="margin:-6px 0 16px;">
+            <button type="button" class="btn btn-secondary" style="font-size:12px;padding:7px 12px;" onclick="sugerirPalavrasChaveGeogrid()">🤖 Sugerir palavras-chave com IA</button>
+            <div id="gg-keyword-suggestions" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;"></div>
+          </div>
+          <div class="input-group" style="margin-bottom:8px;">
+            <div style="font-size:11px;color:var(--text2);background:var(--bg3);border-radius:6px;padding:8px 10px;line-height:1.5;">
+              💡 O Geogrid usa a última empresa que você analisou em <b>Nova Análise</b> pra saber a posição dela — analise ela primeiro, se ainda não fez.
+            </div>
+          </div>
+          <div class="geogrid-row">
+            <div class="input-group">
+              <label class="input-label">Espaçamento (km)</label>
+              <input type="number" class="input" id="ggSpacing" value="1" min="0.5" max="5" step="0.5">
+            </div>
+            <div class="input-group">
+              <label class="input-label">Grade</label>
+              <select class="input" id="ggGrid" onchange="updateGridCost()">
+                <option value="2">2×2 (4 pontos)</option>
+                <option value="3" selected>3×3 (9 pontos)</option>
+                <option value="4">4×4 (16 pontos)</option>
+                <option value="5">5×5 (25 pontos)</option>
+              </select>
+            </div>
+          </div>
+          <div class="cost-bar">
+            <div>
+              <div style="font-size:12px; color:var(--text2);">Custo: <span id="ggCost" style="color:var(--text); font-weight:600;">9 requisições</span></div>
+            </div>
+            <button class="btn btn-primary" onclick="startGeogrid()">🔍 Iniciar Varredura</button>
+          </div>
         </div>
-        <div class="input-group">
-          <label class="input-label">Grade</label>
-          <select class="input" id="ggGrid" onchange="updateGridCost()">
-            <option value="2">2×2 (4 pontos)</option>
-            <option value="3" selected>3×3 (9 pontos)</option>
-            <option value="4">4×4 (16 pontos)</option>
-            <option value="5">5×5 (25 pontos)</option>
-          </select>
+        <div class="card" id="gg-heatmap-wrap" style="display:none;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:10px;">Legenda</div>
+          <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:10px;">
+            <span class="badge badge-green" style="width:fit-content;">1-3: Top Local Pack</span>
+            <span class="badge badge-yellow" style="width:fit-content;">4-10: Visível</span>
+            <span class="badge badge-red" style="width:fit-content;">11+: Pouco visível</span>
+          </div>
+          <div class="ai-bubble" id="gg-ai-analysis" style="display:none;">
+            <div class="ai-bubble-header">🤖 Análise da IA</div>
+            <div id="gg-ai-text"></div>
+          </div>
         </div>
       </div>
-      <div class="cost-bar">
-        <div>
-          <div style="font-size:12px; color:var(--text2);">Custo: <span id="ggCost" style="color:var(--text); font-weight:600;">9 requisições</span></div>
+
+      <div class="card geogrid-map-card">
+        <div class="geogrid-map-header">
+          <div style="font-size:15px; font-weight:600; margin-bottom:4px;">Mapa de Calor</div>
+          <div style="font-size:12px; color:var(--text2);">Posição nos resultados locais em cada ponto do grid</div>
         </div>
-        <button class="btn btn-primary" onclick="startGeogrid()">🔍 Iniciar Varredura</button>
-      </div>
-    </div>
-    <div class="card">
-      <div style="font-size:15px; font-weight:600; margin-bottom:4px;">Mapa de Calor</div>
-      <div style="font-size:12px; color:var(--text2); margin-bottom:16px;">Posição nos resultados locais em cada ponto do grid</div>
-      <div id="gg-heatmap-wrap" style="display:none;">
-        <div style="display:flex; justify-content:center; margin-bottom:12px; gap:8px; flex-wrap:wrap;">
-          <span class="badge badge-green">1-3: Top Local Pack</span>
-          <span class="badge badge-yellow">4-10: Visível</span>
-          <span class="badge badge-red">11+: Pouco visível</span>
-        </div>
-        <div id="gg-heatmap" class="heatmap-grid"></div>
-        <div class="ai-bubble" id="gg-ai-analysis" style="display:none;">
-          <div class="ai-bubble-header">🤖 Análise da IA</div>
-          <div id="gg-ai-text"></div>
+        <div class="gg-map-wrap" id="gg-map-wrap">
+          <button class="gg-fullscreen-btn" onclick="toggleGeogridFullscreen()" id="gg-fullscreen-btn" title="Tela cheia">⛶</button>
+          <div id="gg-map-container"></div>
         </div>
       </div>
-      <div id="gg-map-container" style="width:100%;height:400px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);"></div>
     </div>
   </div>
 
@@ -1656,11 +1690,23 @@ function downloadQR(id) {
 function updateGridCost() { const g = parseInt(document.getElementById('ggGrid').value); document.getElementById('ggCost').textContent = (g*g) + ' requisições'; }
 
 function initGeoGridMap() {
-  if(ggMap) return;
+  if(ggMap) { setTimeout(() => ggMap.invalidateSize(), 50); return; }
   const el = document.getElementById('gg-map-container');
   if(!el) return;
   ggMap = L.map('gg-map-container').setView([-3.7172, -38.5433], 12);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap' }).addTo(ggMap);
+  setTimeout(() => ggMap.invalidateSize(), 100);
+}
+
+function toggleGeogridFullscreen() {
+  const wrap = document.getElementById('gg-map-wrap');
+  const btn = document.getElementById('gg-fullscreen-btn');
+  wrap.classList.toggle('gg-fullscreen');
+  const isFull = wrap.classList.contains('gg-fullscreen');
+  btn.textContent = isFull ? '✕' : '⛶';
+  btn.title = isFull ? 'Sair da tela cheia' : 'Tela cheia';
+  document.body.style.overflow = isFull ? 'hidden' : '';
+  setTimeout(() => { if (ggMap) ggMap.invalidateSize(); }, 150);
 }
 
 // ===================== SUGESTÃO DE PALAVRAS-CHAVE (IA) =====================
@@ -1780,7 +1826,6 @@ function generateGrid(center, spacingKm, gridSize) {
 // porque usa coordenadas reais, não posicionamento manual de div.
 function renderHeatmap(grid, results, gridSize, center, name, spacingKm) {
   document.getElementById('gg-heatmap-wrap').style.display = 'block';
-  document.getElementById('gg-heatmap').style.display = 'none'; // grade antiga em CSS, não usa mais
 
   if (!ggMap) return;
   ggOverlays.forEach(o => ggMap.removeLayer(o));
@@ -1788,11 +1833,10 @@ function renderHeatmap(grid, results, gridSize, center, name, spacingKm) {
 
   const zoom = gridSize <= 2 ? 14 : gridSize === 3 ? 13 : gridSize === 4 ? 12 : 11;
   ggMap.setView(center, zoom);
+  setTimeout(() => ggMap.invalidateSize(), 50);
 
-  // raio do círculo um pouco menor que o espaçamento, pra ficarem lado a lado
-  // encostando (igual ao print do Local Falcon) sem se sobrepor demais
-  const radiusMeters = spacingKm * 1000 * 0.55;
-
+  // Bolinhas pequenas, estilo Local Falcon — só o pin colorido com o número,
+  // sem o círculo grande de área translúcida.
   grid.forEach((point, i) => {
     const rank = results[i];
     let cor, label, titulo;
@@ -1802,19 +1846,14 @@ function renderHeatmap(grid, results, gridSize, center, name, spacingKm) {
     else if (rank <= 10) { cor = '#f97316'; label = String(rank); titulo = 'Posição #' + rank; }
     else { cor = '#ef4444'; label = String(rank); titulo = 'Posição #' + rank; }
 
-    const circle = L.circle(point, {
-      radius: radiusMeters, color: '#fff', weight: 1,
-      fillColor: cor, fillOpacity: 0.28
-    }).addTo(ggMap);
-
+    const size = label.length > 2 ? 26 : 22;
     const icon = L.divIcon({
       className: '',
-      html: `<div style="background:${cor};color:#fff;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);">${label}</div>`,
-      iconSize: [34, 34], iconAnchor: [17, 17]
+      html: `<div style="background:${cor};color:#fff;width:${size}px;height:${size}px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.45);">${label}</div>`,
+      iconSize: [size, size], iconAnchor: [size/2, size/2]
     });
     const marker = L.marker(point, { icon }).addTo(ggMap).bindPopup(`<strong>${titulo}</strong>`);
-
-    ggOverlays.push(circle, marker);
+    ggOverlays.push(marker);
   });
 }
 
