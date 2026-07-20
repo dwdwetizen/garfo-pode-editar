@@ -415,8 +415,12 @@ select.input { cursor:pointer; }
     <div class="geogrid-config">
       <div style="font-size:15px; font-weight:600; margin-bottom:16px;">Configuração</div>
       <div class="input-group">
-        <label class="input-label">Palavra-chave</label>
+        <label class="input-label">Palavra-chave ativa (usada na varredura)</label>
         <input type="text" class="input" id="ggKeyword" placeholder="ex: pet shop fortaleza">
+      </div>
+      <div style="margin:-6px 0 16px;">
+        <button type="button" class="btn btn-secondary" style="font-size:12px;padding:7px 12px;" onclick="sugerirPalavrasChaveGeogrid()">🤖 Sugerir palavras-chave com IA</button>
+        <div id="gg-keyword-suggestions" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;"></div>
       </div>
       <div class="input-group">
         <label class="input-label">Link do Perfil GBP</label>
@@ -430,9 +434,10 @@ select.input { cursor:pointer; }
         <div class="input-group">
           <label class="input-label">Grade</label>
           <select class="input" id="ggGrid" onchange="updateGridCost()">
-            <option value="3">3×3 (9 pontos)</option>
+            <option value="2">2×2 (4 pontos)</option>
+            <option value="3" selected>3×3 (9 pontos)</option>
+            <option value="4">4×4 (16 pontos)</option>
             <option value="5">5×5 (25 pontos)</option>
-            <option value="7">7×7 (49 pontos)</option>
           </select>
         </div>
       </div>
@@ -1658,56 +1663,169 @@ function initGeoGridMap() {
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap' }).addTo(ggMap);
 }
 
+// ===================== SUGESTÃO DE PALAVRAS-CHAVE (IA) =====================
+window.ggSuggestions = [];
+
+async function sugerirPalavrasChaveGeogrid() {
+  if (analyses.length === 0) { alert('Faça uma análise da empresa primeiro (aba Nova Análise) — a IA usa o nome, categoria e endereço dela pra sugerir palavras-chave.'); return; }
+  const a = analyses[0];
+  const cfg = getProspConfig();
+  const box = document.getElementById('gg-keyword-suggestions');
+  if (!cfg.groqKey) { box.innerHTML = '<div style="font-size:12px;color:var(--red2);">Configure a Groq API Key em ⚙️ Configurar API (na Prospecção) primeiro.</div>'; return; }
+
+  box.innerHTML = '<div style="font-size:12px;color:var(--text2);">🤖 Pensando...</div>';
+  try {
+    const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.groqKey },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content:
+          `Sugira 6 palavras-chave curtas (formato "categoria + bairro/cidade", do jeito que um cliente busca no Google Maps) pra achar negócios como "${a.name}" (categoria: ${a.category}, endereço: ${a.address}). Responda SÓ a lista, uma por linha, sem numeração, sem explicação, sem aspas.` }],
+        max_tokens: 200, temperature: 0.6
+      })
+    });
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message);
+    const texto = data.choices?.[0]?.message?.content || '';
+    const sugestoes = texto.split('\n').map(s => s.replace(/^[-•\d.]+\s*/, '').replace(/["']/g,'').trim()).filter(Boolean).slice(0, 8);
+    if (sugestoes.length === 0) { box.innerHTML = '<div style="font-size:12px;color:var(--text2);">Não consegui gerar sugestões, tenta de novo.</div>'; return; }
+    window.ggSuggestions = sugestoes;
+    renderGeogridSuggestions();
+    document.getElementById('ggKeyword').value = sugestoes[0];
+  } catch (e) {
+    box.innerHTML = `<div style="font-size:12px;color:var(--red2);">Erro: ${e.message}</div>`;
+  }
+}
+
+function renderGeogridSuggestions() {
+  const box = document.getElementById('gg-keyword-suggestions');
+  if (window.ggSuggestions.length === 0) { box.innerHTML = ''; return; }
+  box.innerHTML = window.ggSuggestions.map((s, idx) => `
+    <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;background:var(--bg3);border:1px solid var(--border);padding:6px 6px 6px 12px;border-radius:20px;">
+      <span style="cursor:pointer;" title="Clique pra usar essa" onclick="usarPalavraChaveGeogrid(${idx})">${s}</span>
+      <button onclick="removerSugestaoGeogrid(${idx})" title="Remover sugestão" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:15px;line-height:1;padding:0 2px;">×</button>
+    </span>`).join('');
+}
+
+function usarPalavraChaveGeogrid(idx) {
+  document.getElementById('ggKeyword').value = window.ggSuggestions[idx];
+}
+
+function removerSugestaoGeogrid(idx) {
+  window.ggSuggestions.splice(idx, 1);
+  renderGeogridSuggestions();
+}
+
+// ===================== VARREDURA (GEOGRID) =====================
+let ggOverlays = []; // círculos + marcadores desenhados no mapa
+
 async function startGeogrid() {
   const keyword = document.getElementById('ggKeyword').value.trim();
   const spacing = parseFloat(document.getElementById('ggSpacing').value) || 1;
   const gridSize = parseInt(document.getElementById('ggGrid').value) || 3;
-  if(!keyword) { alert('Digite a palavra-chave'); return; }
+  if (!keyword) { alert('Digite ou selecione uma palavra-chave'); return; }
+  if (analyses.length === 0 || !analyses[0].geometry || !analyses[0].geometry.location) {
+    alert('Faça uma análise da empresa primeiro (aba Nova Análise) — o Geogrid precisa da localização e do place_id dela pra saber com certeza se ela apareceu em cada ponto.');
+    return;
+  }
+
+  const a = analyses[0];
+  const center = [a.geometry.location.lat, a.geometry.location.lng];
+  const myPlaceId = a.place_id;
+
   showLoading('Configurando grade geográfica...');
-  let center = [-3.7172, -38.5433];
-  let businessName = keyword;
-  if(analyses.length > 0) { const geo = analyses[0].geometry; if(geo && geo.location) { center = [geo.location.lat, geo.location.lng]; } businessName = analyses[0].name; }
   const grid = generateGrid(center, spacing, gridSize);
-  updateLoading('Buscando rankings em ' + (gridSize*gridSize) + ' pontos...');
+  updateLoading('Buscando rankings em ' + (gridSize * gridSize) + ' pontos...');
+
   const results = await Promise.all(grid.map(async (point, i) => {
-    await sleep(i * 100);
+    await sleep(i * 150); // espaça as chamadas pra não estourar limite da API
     try {
-      const resp = await fetch(`/api/places?action=nearby&location=${point[0]},${point[1]}&radius=${spacing*1000}&keyword=${encodeURIComponent(keyword)}`);
+      const resp = await fetch(`/api/places?action=nearby&location=${point[0]},${point[1]}&radius=${Math.max(spacing * 1000, 300)}&keyword=${encodeURIComponent(keyword)}`);
       const data = await resp.json();
-      if(data.results) { const idx = data.results.findIndex(r => r.name.toLowerCase().includes(businessName.toLowerCase().substring(0,10))); return idx >= 0 ? idx + 1 : 20; }
-    } catch(e) {}
-    return Math.floor(Math.random() * 15) + 1;
+      if (!data.results) return 'erro';
+      // Match pelo place_id exato — nada de "achar por nome parecido" e
+      // NUNCA inventa posição aleatória se não achar: null = fora do top 20.
+      const idx = data.results.findIndex(r => r.place_id === myPlaceId);
+      return idx >= 0 ? idx + 1 : null;
+    } catch (e) {
+      return 'erro';
+    }
   }));
+
   hideLoading();
-  renderHeatmap(grid, results, gridSize, center, businessName);
-  generateGeogridAIAnalysis(results, keyword, businessName);
+  renderHeatmap(grid, results, gridSize, center, a.name, spacing);
+  generateGeogridAIAnalysis(results, keyword, a.name);
 }
 
+// Gera a grade sempre com exatamente gridSize x gridSize pontos, perfeitamente
+// centrada na empresa (funciona certo tanto pra tamanhos ímpares quanto pares).
 function generateGrid(center, spacingKm, gridSize) {
-  const points = []; const half = Math.floor(gridSize / 2);
-  const latDeg = spacingKm / 111; const lngDeg = spacingKm / (111 * Math.cos(center[0] * Math.PI / 180));
-  for(let i = -half; i <= half; i++) for(let j = -half; j <= half; j++) points.push([center[0] + i*latDeg, center[1] + j*lngDeg]);
+  const points = [];
+  const latDeg = spacingKm / 111;
+  const lngDeg = spacingKm / (111 * Math.cos(center[0] * Math.PI / 180));
+  const offset = (gridSize - 1) / 2; // ex: gridSize=4 -> offset=1.5, fica simétrico
+  for (let i = 0; i < gridSize; i++) {
+    for (let j = 0; j < gridSize; j++) {
+      const di = i - offset;
+      const dj = j - offset;
+      points.push([center[0] + di * latDeg, center[1] + dj * lngDeg]);
+    }
+  }
   return points;
 }
 
-function renderHeatmap(grid, results, gridSize, center, name) {
+// Desenha os círculos numerados DIRETO no mapa Leaflet (igual Local Falcon),
+// em vez da grade de CSS separada — fica sempre alinhado e centralizado
+// porque usa coordenadas reais, não posicionamento manual de div.
+function renderHeatmap(grid, results, gridSize, center, name, spacingKm) {
   document.getElementById('gg-heatmap-wrap').style.display = 'block';
-  const hm = document.getElementById('gg-heatmap');
-  hm.style.gridTemplateColumns = `repeat(${gridSize}, 44px)`;
-  hm.innerHTML = results.map((rank, i) => {
-    const cls = rank <= 3 ? 'hm-1' : rank <= 5 ? 'hm-2' : rank <= 7 ? 'hm-3' : rank <= 10 ? 'hm-4' : rank <= 13 ? 'hm-5' : rank <= 16 ? 'hm-6' : 'hm-7';
-    const isCenter = i === Math.floor(results.length/2);
-    return `<div class="hm-cell ${cls} ${isCenter ? 'hm-me' : ''}">${rank > 18 ? '✕' : rank}<div class="tooltip-hm">Pos #${rank}<br>${grid[i][0].toFixed(3)}, ${grid[i][1].toFixed(3)}</div></div>`;
-  }).join('');
-  if(ggMap) { ggMap.setView(center, 13); grid.forEach((point, i) => { const rank = results[i]; const color = rank <= 3 ? '#22c55e' : rank <= 7 ? '#f59e0b' : rank <= 10 ? '#f97316' : '#ef4444'; L.circleMarker(point, { radius:14, fillColor:color, color:'white', weight:2, fillOpacity:.85 }).bindPopup(`<strong>#${rank}</strong>`).addTo(ggMap); }); }
+  document.getElementById('gg-heatmap').style.display = 'none'; // grade antiga em CSS, não usa mais
+
+  if (!ggMap) return;
+  ggOverlays.forEach(o => ggMap.removeLayer(o));
+  ggOverlays = [];
+
+  const zoom = gridSize <= 2 ? 14 : gridSize === 3 ? 13 : gridSize === 4 ? 12 : 11;
+  ggMap.setView(center, zoom);
+
+  // raio do círculo um pouco menor que o espaçamento, pra ficarem lado a lado
+  // encostando (igual ao print do Local Falcon) sem se sobrepor demais
+  const radiusMeters = spacingKm * 1000 * 0.55;
+
+  grid.forEach((point, i) => {
+    const rank = results[i];
+    let cor, label, titulo;
+    if (rank === 'erro') { cor = '#6b7280'; label = '!'; titulo = 'Erro ao consultar esse ponto'; }
+    else if (rank === null) { cor = '#7f1d1d'; label = '20+'; titulo = 'Fora do Top 20 nesse ponto'; }
+    else if (rank <= 3) { cor = '#22c55e'; label = String(rank); titulo = 'Posição #' + rank; }
+    else if (rank <= 10) { cor = '#f97316'; label = String(rank); titulo = 'Posição #' + rank; }
+    else { cor = '#ef4444'; label = String(rank); titulo = 'Posição #' + rank; }
+
+    const circle = L.circle(point, {
+      radius: radiusMeters, color: '#fff', weight: 1,
+      fillColor: cor, fillOpacity: 0.28
+    }).addTo(ggMap);
+
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="background:${cor};color:#fff;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);">${label}</div>`,
+      iconSize: [34, 34], iconAnchor: [17, 17]
+    });
+    const marker = L.marker(point, { icon }).addTo(ggMap).bindPopup(`<strong>${titulo}</strong>`);
+
+    ggOverlays.push(circle, marker);
+  });
 }
 
 async function generateGeogridAIAnalysis(results, keyword, name) {
-  const avg = (results.reduce((a,b)=>a+b,0)/results.length).toFixed(1);
-  const top3 = results.filter(r => r <= 3).length;
-  const out = results.filter(r => r > 10).length;
+  const numericos = results.filter(r => typeof r === 'number');
+  const foraDoTop = results.filter(r => r === null).length;
+  const erros = results.filter(r => r === 'erro').length;
+  const avg = numericos.length ? (numericos.reduce((a, b) => a + b, 0) / numericos.length).toFixed(1) : 'N/D (não apareceu em nenhum ponto)';
+  const top3 = numericos.filter(r => r <= 3).length;
   try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:500, messages:[{ role:'user', content:`Analise geogrid para "${name}" buscando "${keyword}": Posição média: ${avg}, Top 3: ${top3}/${results.length}, Fora top 10: ${out}/${results.length}. Forneça análise breve e 2 recomendações em português.` }] }) });
+    const resp = await fetch('https://api.anthropic.com/v1/messages', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:500, messages:[{ role:'user', content:`Analise geogrid para "${name}" buscando "${keyword}": Posição média (só pontos onde apareceu): ${avg}, Top 3: ${top3}/${results.length}, Fora do Top 20: ${foraDoTop}/${results.length}${erros ? `, ${erros} pontos com erro na consulta` : ''}. Forneça análise breve e 2 recomendações em português.` }] }) });
     const data = await resp.json();
     const text = data.content?.[0]?.text || '';
     if(text) { document.getElementById('gg-ai-analysis').style.display = 'block'; document.getElementById('gg-ai-text').textContent = text; }
