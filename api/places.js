@@ -42,6 +42,28 @@ module.exports = async function handler(req, res) {
       const fields = 'place_id,name,formatted_address,formatted_phone_number,website,rating,user_ratings_total,opening_hours,photos,types,business_status,geometry,reviews,price_level,url,editorial_summary';
       url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&key=${GOOGLE_KEY}&language=pt-BR`;
 
+    } else if (action === 'leads') {
+      // Busca de leads via Places API (New) — roda no servidor pra evitar CORS
+      const textQuery = params.query || '';
+      const maxResults = parseInt(params.max || '20');
+      const leadsResp = await fetch('https://places.googleapis.com/v1/places:searchText', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': GOOGLE_KEY,
+          'X-Goog-FieldMask': [
+            'places.id','places.displayName','places.formattedAddress',
+            'places.googleMapsUri','places.nationalPhoneNumber','places.internationalPhoneNumber',
+            'places.websiteUri','places.rating','places.userRatingCount',
+            'places.photos','places.currentOpeningHours','places.regularOpeningHours',
+            'places.priceLevel','places.primaryTypeDisplayName','places.businessStatus'
+          ].join(',')
+        },
+        body: JSON.stringify({ textQuery, languageCode: 'pt-BR', regionCode: 'BR', maxResultCount: maxResults })
+      });
+      const leadsData = await leadsResp.json();
+      return res.status(200).json(leadsData);
+
     } else if (action === 'nearby') {
       const location = params.location || '';
       const radius = params.radius || '3000';

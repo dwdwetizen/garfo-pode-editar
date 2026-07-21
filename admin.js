@@ -4,7 +4,7 @@
 const PERM_LABELS = {
   'dashboard': 'Dashboard', 'nova-analise': 'Nova Análise', 'analises': 'Análises',
   'geogrid': 'Mapa de Calor', 'raiox': 'Raio-X Local', 'servicos': 'Serviços',
-  'propostas': 'Propostas', 'prospeccao': 'Prospecção', 'crm': 'CRM / Vendas'
+  'propostas': 'Propostas', 'prospeccao': 'Prospecção', 'crm': 'CRM / Vendas', 'metas': 'Metas'
 };
 
 async function loadAdminPanel() {
@@ -25,6 +25,13 @@ async function loadAdminPanel() {
       statusBox.textContent = '⚠️ Ainda não conectada — clique no botão abaixo pra autorizar.';
       statusBox.style.color = 'var(--yellow2)';
     }
+
+    document.getElementById('adm-dias-followup').value = settings.dias_followup || 3;
+    document.getElementById('adm-dias-alerta').value = settings.dias_alerta_followup ?? 1;
+    window.followUpConfig = {
+      diasPadrao: settings.dias_followup || 3,
+      diasAlerta: settings.dias_alerta_followup ?? 1
+    };
   }
 
   // Monta checkboxes de permissão do form "novo funcionário"
@@ -36,6 +43,7 @@ async function loadAdminPanel() {
   `).join('');
 
   await renderEmployeesList();
+  if (typeof renderMetasAdmin === 'function') await renderMetasAdmin();
 }
 
 async function salvarConfigAdmin() {
@@ -66,6 +74,27 @@ function syncSettingsToLocalStorage(settings) {
   if (settings.calendar_id) localStorage.setItem('prosp_calendar_id', settings.calendar_id);
 }
 
+async function salvarConfigFollowUp() {
+  const msg = document.getElementById('adm-followup-msg');
+  const diasFollowup = parseInt(document.getElementById('adm-dias-followup').value, 10) || 3;
+  const diasAlerta = parseInt(document.getElementById('adm-dias-alerta').value, 10);
+  const payload = {
+    id: 1,
+    dias_followup: diasFollowup,
+    dias_alerta_followup: isNaN(diasAlerta) ? 1 : diasAlerta
+  };
+  const { error } = await sb.from('settings').upsert(payload);
+  if (error) {
+    msg.style.color = 'var(--red2)';
+    msg.textContent = 'Erro ao salvar: ' + error.message;
+  } else {
+    msg.style.color = 'var(--green2)';
+    msg.textContent = 'Regras de follow-up salvas! Já valem pros próximos follow-ups criados.';
+    window.followUpConfig = { diasPadrao: diasFollowup, diasAlerta: payload.dias_alerta_followup };
+    if (typeof renderFollowUps === 'function' && document.getElementById('page-followup')?.classList.contains('active')) renderFollowUps();
+  }
+}
+
 async function renderEmployeesList() {
   const box = document.getElementById('adm-employees-list');
   const { data: profiles, error } = await sb.from('profiles').select('*').order('created_at');
@@ -91,9 +120,32 @@ async function renderEmployeesList() {
         `).join('')}
       </div>
       <button class="login-btn" style="width:auto;padding:6px 14px;font-size:12px;" onclick="salvarPermissoes('${p.id}')">Salvar</button>
+      ${p.id !== window.currentProfile.id ? `<button class="btn btn-danger" style="padding:6px 14px;font-size:12px;margin-left:6px;" onclick="deletarFuncionario('${p.id}','${(p.nome||p.email).replace(/'/g,"")}')">🗑 Excluir colaborador</button>` : ''}
       <span id="emp-msg-${p.id}" style="font-size:11px;margin-left:10px;"></span>
     </div>
   `).join('');
+}
+
+async function deletarFuncionario(userId, nome) {
+  if (!confirm(`Excluir o colaborador "${nome}"? A conta de login dele deixa de existir. Os leads e follow-ups que ele já gerou continuam salvos (não somem), só o acesso é removido. Confirma?`)) return;
+
+  const msg = document.getElementById('emp-msg-' + userId);
+  if (msg) { msg.style.color = 'var(--text2)'; msg.textContent = 'Excluindo...'; }
+
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    const resp = await fetch('/api/delete-employee', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+      body: JSON.stringify({ userId })
+    });
+    const result = await resp.json();
+    if (!resp.ok) throw new Error(result.error || 'Falha ao excluir colaborador');
+    await renderEmployeesList();
+    if (typeof renderMetasAdmin === 'function') await renderMetasAdmin();
+  } catch (err) {
+    alert('Erro ao excluir: ' + err.message);
+  }
 }
 
 async function salvarPermissoes(userId) {
@@ -138,6 +190,38 @@ async function criarFuncionario() {
     msg.style.color = 'var(--red2)';
     msg.textContent = 'Erro: ' + err.message;
   }
+}
+
+// ===================== BUSCA DE DADOS POR FUNCIONÁRIO =====================
+// Antes esta função era chamada por verFuncionario() mas nunca tinha sido
+// escrita — por isso a "Visão da Equipe" não funcionava. Ela busca os dados
+// direto do Supabase (não depende do que já está carregado no navegador do
+// admin) e filtra só o que pertence ao funcionário escolhido.
+async function buscarDadosDeUsuario(userId) {
+  const { data: rows, error } = await sb.from('team_data').select('id, data');
+  if (error) {
+    console.warn('Erro ao buscar dados do time:', error.message);
+    return { leadsProsp: [], crmLeads: [] };
+  }
+
+  const byId = {};
+  rows.forEach(r => byId[r.id] = r.data || []);
+
+  const todosLeads = byId.leads_prosp || [];
+  const todosCrm   = byId.crm || [];
+
+  // Leads de prospecção: filtra pelo dono (leads antigos sem dono não entram
+  // aqui, já que a visão é "o que ESSE funcionário prospectou").
+  const leadsDoUsuario = todosLeads.filter(l => l.donoId === userId);
+
+  // CRM: hoje os cards não guardam donoId (é um pipeline compartilhado), então
+  // ligamos pelo prospId de volta ao lead de prospecção do funcionário, quando
+  // existir essa referência. Cards sem prospId (ex: vindos de Análise) não
+  // têm como ser atribuídos a uma pessoa específica ainda.
+  const idsLeadsDoUsuario = new Set(leadsDoUsuario.map(l => l.id));
+  const crmDoUsuario = todosCrm.filter(c => c.prospId !== undefined && idsLeadsDoUsuario.has(todosLeads[c.prospId]?.id));
+
+  return { leadsProsp: leadsDoUsuario, crmLeads: crmDoUsuario };
 }
 
 // ===================== VISÃO DA EQUIPE =====================

@@ -7,7 +7,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Todas as seções que podem ser liberadas/bloqueadas por funcionário.
 // 'admin' é especial: só aparece pra quem tem role = 'admin'.
-const ALL_PERMS = ['dashboard','nova-analise','analises','geogrid','raiox','servicos','propostas','prospeccao','crm'];
+const ALL_PERMS = ['dashboard','nova-analise','analises','geogrid','raiox','servicos','propostas','prospeccao','crm','metas'];
 
 window.currentProfile = null; // { id, email, nome, role, permissions: [...] }
 
@@ -120,6 +120,10 @@ function enterApp(profile) {
       if (data.google_key) localStorage.setItem('prosp_google_key', data.google_key);
       if (data.groq_key) localStorage.setItem('prosp_groq_key', data.groq_key);
       if (data.calendar_id) localStorage.setItem('prosp_calendar_id', data.calendar_id);
+      window.followUpConfig = {
+        diasPadrao: data.dias_followup || 3,
+        diasAlerta: data.dias_alerta_followup ?? 1
+      };
     }
   });
 

@@ -82,6 +82,18 @@ async function confirmarReuniao() {
     leadsProsp[reuniaoLeadIdx].obsReuniao = obs;
     salvarLeadsProsp();
 
+    // O follow-up já foi criado/atualizado quando o Status virou "Reunião
+    // marcada" (ver alterarStatusProsp em index.html). Aqui só sincronizamos
+    // a data real da reunião e a observação — sem contar como nova tentativa.
+    if (typeof followUps !== 'undefined') {
+      const fu = followUps.find(f => f.leadId === (l.id || l.empresa));
+      if (fu) {
+        fu.observacoes = obs || fu.observacoes;
+        fu.proximoFollowup = inicio.toISOString();
+        if (typeof salvarFollowUps === 'function') salvarFollowUps();
+      }
+    }
+
     msg.style.color = 'var(--green2)';
     msg.textContent = 'Reunião agendada com sucesso!';
     setTimeout(() => { fecharModalReuniao(); renderLeadsProsp(); }, 900);
